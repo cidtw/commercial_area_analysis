@@ -1,0 +1,22 @@
+{
+  "name": "commercial-area-analysis-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "react:doctor": "npx react-doctor@latest --json > .react-doctor-report.json"
+  },
+  "dependencies": {
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "6.0.3"
+  }
+}

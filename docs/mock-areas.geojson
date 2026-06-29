@@ -1,0 +1,116 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                127.0528,
+                37.5429
+              ],
+              [
+                127.0589,
+                37.5429
+              ],
+              [
+                127.0589,
+                37.5472
+              ],
+              [
+                127.0528,
+                37.5472
+              ],
+              [
+                127.0528,
+                37.5429
+              ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "area-seongsu-1",
+        "name": "성수1가1동",
+        "kind": "area"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                127.0589,
+                37.5446
+              ],
+              [
+                127.0656,
+                37.5446
+              ],
+              [
+                127.0656,
+                37.5495
+              ],
+              [
+                127.0589,
+                37.5495
+              ],
+              [
+                127.0589,
+                37.5446
+              ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "area-seongsu-2",
+        "name": "성수1가2동",
+        "kind": "area"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                127.0545,
+                37.5375
+              ],
+              [
+                127.0615,
+                37.5375
+              ],
+              [
+                127.0615,
+                37.5428
+              ],
+              [
+                127.0545,
+                37.5428
+              ],
+              [
+                127.0545,
+                37.5375
+              ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "area-seongsu-3",
+        "name": "성수2가1동",
+        "kind": "area"
+      }
+    }
+  ]
+}

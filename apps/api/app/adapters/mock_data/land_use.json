@@ -1,0 +1,47 @@
+[
+  {
+    "id": "land-001",
+    "area_id": "area-seongsu-1",
+    "zone_code": "semi-residential",
+    "zone_name": "준주거지역",
+    "permitted_category_groups": ["food_beverage", "retail"],
+    "restriction_notes": "야간 소음과 주차 관련 조건을 검토해야 합니다.",
+    "boundary_geojson": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [[[127.0528, 37.5429], [127.0589, 37.5429], [127.0589, 37.5472], [127.0528, 37.5472], [127.0528, 37.5429]]]
+      ]
+    },
+    "is_mock": true
+  },
+  {
+    "id": "land-002",
+    "area_id": "area-seongsu-2",
+    "zone_code": "general-commercial",
+    "zone_name": "일반상업지역",
+    "permitted_category_groups": ["food_beverage", "retail", "service"],
+    "restriction_notes": "유동이 많아 경쟁도가 빠르게 변할 수 있습니다.",
+    "boundary_geojson": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [[[127.0589, 37.5446], [127.0656, 37.5446], [127.0656, 37.5495], [127.0589, 37.5495], [127.0589, 37.5446]]]
+      ]
+    },
+    "is_mock": true
+  },
+  {
+    "id": "land-003",
+    "area_id": "area-seongsu-3",
+    "zone_code": "near-industrial",
+    "zone_name": "준공업지역",
+    "permitted_category_groups": ["service", "retail"],
+    "restriction_notes": "식음료 업종은 업장 성격과 입지 세부 규정을 별도로 검토해야 합니다.",
+    "boundary_geojson": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [[[127.0545, 37.5375], [127.0615, 37.5375], [127.0615, 37.5428], [127.0545, 37.5428], [127.0545, 37.5375]]]
+      ]
+    },
+    "is_mock": true
+  }
+]

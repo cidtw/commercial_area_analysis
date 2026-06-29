@@ -1,0 +1,8 @@
+[
+  {"id": "cat-cafe", "code": "cafe", "name": "카페", "group_name": "food_beverage", "similarity_group": "dessert_drink", "is_active": true},
+  {"id": "cat-bakery", "code": "bakery", "name": "베이커리", "group_name": "food_beverage", "similarity_group": "dessert_drink", "is_active": true},
+  {"id": "cat-dessert", "code": "dessert", "name": "디저트", "group_name": "food_beverage", "similarity_group": "dessert_drink", "is_active": true},
+  {"id": "cat-restaurant", "code": "restaurant", "name": "일반음식점", "group_name": "food_beverage", "similarity_group": "meal", "is_active": true},
+  {"id": "cat-fitness", "code": "fitness", "name": "피트니스", "group_name": "service", "similarity_group": "wellness", "is_active": true},
+  {"id": "cat-retail", "code": "lifestyle-shop", "name": "라이프스타일 소매", "group_name": "retail", "similarity_group": "lifestyle", "is_active": true}
+]

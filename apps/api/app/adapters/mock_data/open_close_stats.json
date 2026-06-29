@@ -1,0 +1,7 @@
+[
+  {"id": "ocs-001", "area_id": "area-seongsu-1", "category_id": "cat-cafe", "snapshot_month": "2026-05-01", "opened_count_6m": 2, "closed_count_6m": 1, "opened_count_12m": 4, "closed_count_12m": 2, "survival_rate_12m": 0.73, "is_mock": true},
+  {"id": "ocs-002", "area_id": "area-seongsu-2", "category_id": "cat-cafe", "snapshot_month": "2026-05-01", "opened_count_6m": 1, "closed_count_6m": 1, "opened_count_12m": 3, "closed_count_12m": 2, "survival_rate_12m": 0.68, "is_mock": true},
+  {"id": "ocs-003", "area_id": "area-seongsu-3", "category_id": "cat-cafe", "snapshot_month": "2026-05-01", "opened_count_6m": 1, "closed_count_6m": 0, "opened_count_12m": 2, "closed_count_12m": 1, "survival_rate_12m": 0.79, "is_mock": true},
+  {"id": "ocs-004", "area_id": "area-seongsu-1", "category_id": "cat-bakery", "snapshot_month": "2026-05-01", "opened_count_6m": 1, "closed_count_6m": 0, "opened_count_12m": 2, "closed_count_12m": 1, "survival_rate_12m": 0.77, "is_mock": true},
+  {"id": "ocs-005", "area_id": "area-seongsu-2", "category_id": "cat-dessert", "snapshot_month": "2026-05-01", "opened_count_6m": 2, "closed_count_6m": 1, "opened_count_12m": 4, "closed_count_12m": 2, "survival_rate_12m": 0.7, "is_mock": true}
+]
