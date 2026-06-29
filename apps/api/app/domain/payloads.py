@@ -16,6 +16,15 @@ class CompetitorStorePayload(TypedDict):
     longitude: float
 
 
+class SelectedLocationPayload(TypedDict):
+    latitude: float
+    longitude: float
+    label: str
+    source: str
+    address: str | None
+    region: str | None
+
+
 class LlmReadyPayload(TypedDict):
     area_name: str
     category_name: str

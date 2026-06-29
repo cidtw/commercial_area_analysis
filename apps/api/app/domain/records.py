@@ -10,6 +10,7 @@ class AreaRecord:
     code: str
     name: str
     district_name: str
+    administrative_dong_name: str
     center_latitude: float
     center_longitude: float
     is_mock: bool

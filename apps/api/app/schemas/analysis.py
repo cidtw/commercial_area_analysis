@@ -2,18 +2,63 @@ from collections.abc import Mapping
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.catalog import AreaSummary, CategorySummary
+
+
+class AnalysisLocationInput(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+    label: str
+    source: str
+    address: str | None = None
+    region: str | None = None
 
 
 class AnalysisRequestBody(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    area_id: str
+    area_id: str | None = None
     category_id: str
     radius_m: Literal[300, 500, 1000]
-    data_mode: Literal["mock", "sample"] = "mock"
+    data_mode: Literal["mock", "sample", "real"] = "mock"
+    location: AnalysisLocationInput | None = None
+
+    @model_validator(mode="after")
+    def validate_target(self) -> "AnalysisRequestBody":
+        if self.area_id is None and self.location is None:
+            raise ValueError("area_id or location is required")
+        return self
+
+
+class SelectedLocationResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    latitude: float
+    longitude: float
+    label: str
+    source: str
+    address: str | None = None
+    region: str | None = None
+
+
+class ResolvedRegionResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    area_id: str | None = None
+    area_name: str
+    district_name: str
+    administrative_dong_name: str
+
+
+class DataCoverageResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    status: Literal["ready", "insufficient"]
+    message: str
 
 
 class ScoreBreakdown(BaseModel):
@@ -123,5 +168,10 @@ class AnalysisResponse(BaseModel):
     recommendation_level: str
     recommendation_reasons: list[str]
     warning_reasons: list[str]
+    selected_location: SelectedLocationResponse | None = None
+    resolved_region: ResolvedRegionResponse | None = None
+    nearby_competitors: list[CompetitorStoreItem] = []
+    unavailable_data_warnings: list[str] = []
+    data_coverage: DataCoverageResponse
     map_layers: list[GeoLayerResponse]
     report_payload: ReportPayloadResponse

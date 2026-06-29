@@ -25,6 +25,7 @@ def test_analysis_flow_returns_scores_and_report(client) -> None:
     assert payload["raw_metrics"]["same_category_count_500m"] >= 0
     assert payload["report_payload"]["disclaimers"]
     assert payload["competitor_stores"]
+    assert payload["data_coverage"]["status"] == "ready"
 
     analysis_id = payload["analysis_id"]
     saved = client.get(f"/api/analysis/{analysis_id}")
@@ -93,6 +94,52 @@ def test_analysis_rejects_invalid_radius(client) -> None:
     assert payload["error"] == "Validation Error"
     assert payload["message"] == "Request validation failed."
     assert payload["details"]
+
+
+def test_coordinate_analysis_returns_selected_location(client) -> None:
+    response = client.post(
+        "/api/analysis",
+        json={
+            "location": {
+                "lat": 37.5446,
+                "lng": 127.0557,
+                "label": "성수역",
+                "source": "mock_place",
+            },
+            "category_id": "cat-cafe",
+            "radius_m": 500,
+            "data_mode": "mock",
+        },
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["selected_location"]["label"] == "성수역"
+    assert payload["resolved_region"]["area_name"]
+    assert payload["nearby_competitors"] == payload["competitor_stores"]
+
+
+def test_real_coordinate_analysis_returns_insufficient_coverage_when_no_real_data(client) -> None:
+    response = client.post(
+        "/api/analysis",
+        json={
+            "location": {
+                "lat": 37.5446,
+                "lng": 127.0557,
+                "label": "성수역",
+                "source": "mock_place",
+            },
+            "category_id": "cat-cafe",
+            "radius_m": 500,
+            "data_mode": "real",
+        },
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["data_mode"] == "real"
+    assert payload["data_coverage"]["status"] == "insufficient"
+    assert payload["unavailable_data_warnings"]
 
 
 def test_phase2_catalog_endpoints_return_methodology_and_sources(client) -> None:

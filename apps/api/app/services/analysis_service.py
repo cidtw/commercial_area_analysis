@@ -17,21 +17,30 @@ from app.analysis.metrics import build_metric_snapshot
 from app.analysis.recommendations import build_recommendation
 from app.analysis.scoring import build_scores
 from app.core.config import get_settings
-from app.domain.payloads import CompetitorStorePayload, RawMetrics, ReportPayloadData
+from app.domain.payloads import (
+    CompetitorStorePayload,
+    RawMetrics,
+    ReportPayloadData,
+    SelectedLocationPayload,
+)
 from app.reporting.report_payload import build_report_payload
 from app.repositories import analysis as analysis_repository
 from app.repositories import catalog as catalog_repository
 from app.schemas.analysis import (
     AnalysisGeoResponse,
+    AnalysisLocationInput,
     AnalysisResponse,
     CompetitorStoreItem,
+    DataCoverageResponse,
     DatasetSourceItem,
     DataSourceListResponse,
     GeoLayerResponse,
     MethodologyResponse,
     ReportPayloadResponse,
+    ResolvedRegionResponse,
     ScoreBreakdown,
     ScoreFormulaItem,
+    SelectedLocationResponse,
 )
 from app.schemas.catalog import AreaSummary, CategorySummary
 
@@ -170,6 +179,26 @@ def normalize_report_payload(payload: Mapping[str, object]) -> ReportPayloadData
     )
 
 
+def normalize_selected_location(value: object) -> SelectedLocationPayload | None:
+    if not isinstance(value, Mapping):
+        return None
+    try:
+        latitude = float(value["latitude"])
+        longitude = float(value["longitude"])
+        label = str(value["label"])
+        source = str(value["source"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return SelectedLocationPayload(
+        latitude=latitude,
+        longitude=longitude,
+        label=label,
+        source=source,
+        address=str(value["address"]) if value.get("address") is not None else None,
+        region=str(value["region"]) if value.get("region") is not None else None,
+    )
+
+
 def build_mock_data_source(data_label: str) -> dict[str, object]:
     return {
         "source_key": "mock_seed_source",
@@ -213,11 +242,18 @@ def build_analysis_map_layers(
     competitor_rows: list[CompetitorStorePayload],
     radius_m: int,
     data_mode: str,
+    selected_location: SelectedLocationPayload | None = None,
 ) -> list[dict[str, object]]:
+    center_latitude = (
+        selected_location["latitude"] if selected_location is not None else area_model.center_latitude
+    )
+    center_longitude = (
+        selected_location["longitude"] if selected_location is not None else area_model.center_longitude
+    )
     boundary_geometry = area_model.boundary_geojson or {
         "type": "Polygon",
         "coordinates": [
-            build_circle_polygon(area_model.center_latitude, area_model.center_longitude, 40),
+            build_circle_polygon(center_latitude, center_longitude, 40),
         ],
     }
     boundary_features = [
@@ -241,8 +277,8 @@ def build_analysis_map_layers(
                 "type": "Polygon",
                 "coordinates": [
                     build_circle_polygon(
-                        area_model.center_latitude,
-                        area_model.center_longitude,
+                        center_latitude,
+                        center_longitude,
                         radius_m,
                     ),
                 ],
@@ -268,6 +304,30 @@ def build_analysis_map_layers(
     ]
     return [
         {
+            "layer_id": "selected-location",
+            "label": "선택 위치",
+            "data_mode": data_mode,
+            "feature_collection": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "label": (
+                                selected_location["label"]
+                                if selected_location is not None
+                                else area_model.name
+                            ),
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [center_longitude, center_latitude],
+                        },
+                    },
+                ],
+            },
+        },
+        {
             "layer_id": "selected-area-boundary",
             "label": "선택 행정동 경계",
             "data_mode": area_model.data_mode,
@@ -291,25 +351,61 @@ def build_analysis_map_layers(
 def run_analysis(
     session: Session,
     *,
-    area_id: str,
+    area_id: str | None,
     category_id: str,
     radius_m: int,
     data_mode: str,
+    location: AnalysisLocationInput | None = None,
 ) -> AnalysisResponse:
     settings = get_settings()
-    area_model = catalog_repository.get_area(session, area_id)
+    selected_location = (
+        SelectedLocationPayload(
+            latitude=location.lat,
+            longitude=location.lng,
+            label=location.label,
+            source=location.source,
+            address=location.address,
+            region=location.region,
+        )
+        if location is not None
+        else None
+    )
+    if area_id is not None:
+        area_model = catalog_repository.get_area(session, area_id)
+    elif selected_location is not None:
+        matched_area = catalog_repository.find_area_for_point(
+            session,
+            latitude=selected_location["latitude"],
+            longitude=selected_location["longitude"],
+        )
+        if matched_area is None:
+            raise LookupError("area not found for selected location")
+        area_model = matched_area
+    else:
+        raise LookupError("area not found")
     category_model = catalog_repository.get_category(session, category_id)
     area = catalog_repository.to_area_record(area_model)
     category = catalog_repository.to_category_record(category_model)
     requested_data_mode = data_mode
-    stores = catalog_repository.to_store_records(
-        catalog_repository.get_stores_with_categories_for_analysis(
-            session,
-            area=area,
-            radius_m=1000,
-            data_mode=requested_data_mode,
-        ),
-    )
+    if selected_location is None:
+        stores = catalog_repository.to_store_records(
+            catalog_repository.get_stores_with_categories_for_analysis(
+                session,
+                area=area,
+                radius_m=1000,
+                data_mode=requested_data_mode,
+            ),
+        )
+    else:
+        stores = catalog_repository.to_store_records(
+            catalog_repository.get_stores_with_categories_for_point(
+                session,
+                latitude=selected_location["latitude"],
+                longitude=selected_location["longitude"],
+                radius_m=1000,
+                data_mode=requested_data_mode,
+            ),
+        )
     foot_traffic = catalog_repository.to_foot_traffic_record(
         catalog_repository.get_foot_traffic(session, area.id, radius_m),
     )
@@ -342,6 +438,9 @@ def run_analysis(
         or area_model.data_mode == "sample"
     )
     effective_data_mode = "sample" if has_sample_data else "mock"
+    unavailable_data_warnings: list[str] = []
+    coverage_status = "ready"
+    coverage_message = "분석 가능한 데이터가 준비되어 있습니다."
     if requested_data_mode == "sample" and effective_data_mode == "mock":
         stores = catalog_repository.to_store_records(
             catalog_repository.get_stores_with_categories_for_analysis(
@@ -354,6 +453,26 @@ def run_analysis(
         competition = None
         stability = None
         sales = None
+        unavailable_data_warnings.append(
+            "sample subset 데이터가 없어 mock sample data로 대체했습니다.",
+        )
+        coverage_status = "insufficient"
+        coverage_message = "선택한 범위의 sample 데이터가 부족해 mock 기반으로 대체했습니다."
+    if requested_data_mode == "real":
+        effective_data_mode = "real"
+        if not stores:
+            unavailable_data_warnings.append(
+                "선택한 반경 내에 import된 실제 업소 데이터가 부족합니다.",
+            )
+            coverage_status = "insufficient"
+            coverage_message = "해당 위치의 실제 업소 데이터가 아직 충분하지 않습니다."
+
+    center_latitude = (
+        selected_location["latitude"] if selected_location is not None else area.center_latitude
+    )
+    center_longitude = (
+        selected_location["longitude"] if selected_location is not None else area.center_longitude
+    )
 
     raw_metrics, competitor_rows = build_metric_snapshot(
         area=area,
@@ -366,6 +485,8 @@ def run_analysis(
         stability=stability,
         sales=sales,
         selected_radius_m=radius_m,
+        center_latitude=center_latitude,
+        center_longitude=center_longitude,
     )
     scores = build_scores(raw_metrics)
     recommendation_level, recommendation_reasons, warning_reasons = build_recommendation(
@@ -393,6 +514,7 @@ def run_analysis(
         competitor_rows=competitor_rows,
         radius_m=radius_m,
         data_mode=effective_data_mode,
+        selected_location=selected_location,
     )
     report_payload = build_report_payload(
         area_name=area.name,
@@ -419,6 +541,7 @@ def run_analysis(
             "radius_m": radius_m,
             "data_mode": requested_data_mode,
             "effective_data_mode": effective_data_mode,
+            "selected_location": dict(selected_location) if selected_location is not None else None,
         },
     )
     result = analysis_repository.create_analysis_result(
@@ -455,6 +578,15 @@ def run_analysis(
         recommendation_level=result.recommendation_level,
         recommendation_reasons=normalize_string_list(result.recommendation_reasons),
         warning_reasons=normalize_string_list(result.warning_reasons),
+        selected_location=selected_location,
+        resolved_region=ResolvedRegionResponse(
+            area_id=area_model.id,
+            area_name=area_model.name,
+            district_name=area_model.district_name,
+            administrative_dong_name=area_model.administrative_dong_name,
+        ),
+        unavailable_data_warnings=unavailable_data_warnings,
+        data_coverage=DataCoverageResponse(status=coverage_status, message=coverage_message),
         map_layers=normalize_geo_layers(result.map_layers),
         report_payload=normalize_report_payload(result.report_payload),
     )
@@ -489,6 +621,22 @@ def get_saved_analysis(session: Session, analysis_id: str) -> AnalysisResponse:
         recommendation_level=result.recommendation_level,
         recommendation_reasons=normalize_string_list(result.recommendation_reasons),
         warning_reasons=normalize_string_list(result.warning_reasons),
+        selected_location=normalize_selected_location(request.input_snapshot.get("selected_location")),
+        resolved_region=ResolvedRegionResponse(
+            area_id=area_model.id,
+            area_name=area_model.name,
+            district_name=area_model.district_name,
+            administrative_dong_name=area_model.administrative_dong_name,
+        ),
+        unavailable_data_warnings=[],
+        data_coverage=DataCoverageResponse(
+            status="ready" if result.data_mode != "real" or result.competitor_stores else "insufficient",
+            message=(
+                "분석 가능한 데이터가 준비되어 있습니다."
+                if result.data_mode != "real" or result.competitor_stores
+                else "해당 위치의 실제 업소 데이터가 아직 충분하지 않습니다."
+            ),
+        ),
         map_layers=normalize_geo_layers(result.map_layers),
         report_payload=normalize_report_payload(result.report_payload),
     )
@@ -511,6 +659,10 @@ def build_analysis_response(
     recommendation_level: str,
     recommendation_reasons: list[str],
     warning_reasons: list[str],
+    selected_location: SelectedLocationPayload | None,
+    resolved_region: ResolvedRegionResponse,
+    unavailable_data_warnings: list[str],
+    data_coverage: DataCoverageResponse,
     map_layers: list[GeoLayerResponse],
     report_payload: ReportPayloadData,
 ) -> AnalysisResponse:
@@ -542,6 +694,13 @@ def build_analysis_response(
         recommendation_level=recommendation_level,
         recommendation_reasons=recommendation_reasons,
         warning_reasons=warning_reasons,
+        selected_location=(
+            SelectedLocationResponse(**selected_location) if selected_location is not None else None
+        ),
+        resolved_region=resolved_region,
+        nearby_competitors=[CompetitorStoreItem(**item) for item in competitor_stores],
+        unavailable_data_warnings=unavailable_data_warnings,
+        data_coverage=data_coverage,
         map_layers=map_layers,
         report_payload=ReportPayloadResponse(**report_payload),
     )

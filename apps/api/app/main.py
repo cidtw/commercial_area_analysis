@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import router
+from app.adapters.geo.errors import GeoProviderError
 from app.bootstrap.mock_seed import ensure_mock_seeded
 from app.core.config import get_settings
 from app.db.base import Base
@@ -100,6 +101,15 @@ async def handle_sqlalchemy_error(_: Request, exc: SQLAlchemyError) -> JSONRespo
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         error="Database Error",
         message="A database operation failed.",
+    )
+
+
+@app.exception_handler(GeoProviderError)
+async def handle_geo_provider_error(_: Request, exc: GeoProviderError) -> JSONResponse:
+    return build_error_response(
+        status_code=exc.status_code,
+        error="Geo Provider Error",
+        message=str(exc),
     )
 
 

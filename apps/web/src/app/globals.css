@@ -640,6 +640,111 @@ button:hover {
   line-height: 1.5;
 }
 
+.analysisSearchForm {
+  gap: 20px;
+}
+
+.analysisSearchSection,
+.analysisSelectionSummary,
+.analysisMapPreview,
+.searchResultsPanel {
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.analysisSearchSection,
+.analysisSelectionSummary,
+.analysisMapPreview {
+  padding: 18px;
+}
+
+.searchTypeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.searchTypeChip,
+.searchResultItem {
+  border: 1px solid var(--border-default);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+.searchTypeChip {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+}
+
+.searchTypeChip--active,
+.searchResultItem--active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.searchResultsPanel {
+  margin-top: 14px;
+  padding: 10px;
+}
+
+.searchResultsList {
+  display: grid;
+  gap: 10px;
+}
+
+.searchResultItem {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 16px;
+  text-align: left;
+  font: inherit;
+}
+
+.searchResultItem span,
+.searchStateMessage,
+.selectionMeta {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.analysisMapCanvas {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  margin-top: 14px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at center, rgba(49, 130, 246, 0.14), transparent 40%),
+    linear-gradient(180deg, #f6fbff 0%, #eef5fb 100%);
+}
+
+.analysisMapPin {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 12px rgba(49, 130, 246, 0.12);
+}
+
+.selectedLocationCard,
+.warningList {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--border-subtle);
+}
+
+.warningList {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .fieldColumn select {
   padding: 16px 18px;
   border: 1px solid var(--border-default);

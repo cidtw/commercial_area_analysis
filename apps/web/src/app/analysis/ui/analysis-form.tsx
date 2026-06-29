@@ -4,10 +4,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { MockDataBadge } from "@/components/mock-data-badge";
-import { apiBaseUrl } from "@/lib/config";
-import type { AreaSummary, CategorySummary } from "@/lib/types";
+import { apiBaseUrl, mapProvider } from "@/lib/config";
+import type { AreaSummary, CategorySummary, GeoSearchItem, GeoSearchResponse } from "@/lib/types";
 
 const radiusOptions = [300, 500, 1000] as const;
+const searchTypeOptions = [
+  { id: "place", label: "장소" },
+  { id: "address", label: "주소" },
+  { id: "region", label: "지역" },
+] as const;
 const catalogRequestInit = { cache: "force-cache" as RequestCache };
 
 let areasPromise: Promise<AreaSummary[]> | null = null;
@@ -55,6 +60,18 @@ async function loadCategories() {
   return categoriesPromise;
 }
 
+async function fetchGeoSearch(query: string, searchType: string): Promise<GeoSearchItem[]> {
+  const params = new URLSearchParams({ q: query, type: searchType });
+  const response = await fetch(`${apiBaseUrl}/api/geo/search?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("geo search failed");
+  }
+  const payload = (await response.json()) as GeoSearchResponse;
+  return payload.items;
+}
+
 export function AnalysisForm() {
   const router = useRouter();
   const [areas, setAreas] = useState<AreaSummary[]>([]);
@@ -62,14 +79,20 @@ export function AnalysisForm() {
   const [areaId, setAreaId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [radiusM, setRadiusM] = useState<(typeof radiusOptions)[number]>(500);
-  const [dataMode, setDataMode] = useState<"mock" | "sample">("mock");
+  const [dataMode, setDataMode] = useState<"mock" | "sample" | "real">("mock");
+  const [searchType, setSearchType] = useState<"place" | "address" | "region">("place");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<GeoSearchItem[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<GeoSearchItem | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchMessage, setSearchMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const statusMessage =
     error ||
     (submitting
       ? "분석 요청을 보내는 중입니다."
-      : "모든 항목을 고른 뒤 분석을 실행하세요.");
+      : "검색 또는 지역 선택 후 업종과 반경을 고르면 분석을 실행할 수 있습니다.");
 
   useEffect(() => {
     async function loadCatalog() {
@@ -85,20 +108,77 @@ export function AnalysisForm() {
     });
   }, []);
 
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      setSearchMessage(searchQuery.trim() ? "두 글자 이상 입력해 주세요." : "");
+      return;
+    }
+
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      setSearchLoading(true);
+      setSearchMessage("");
+      void fetchGeoSearch(searchQuery.trim(), searchType)
+        .then((items) => {
+          if (cancelled) {
+            return;
+          }
+          setSearchResults(items);
+          setSearchMessage(items.length > 0 ? "" : "검색 결과가 없습니다.");
+        })
+        .catch(() => {
+          if (cancelled) {
+            return;
+          }
+          setSearchResults([]);
+          setSearchMessage("위치 검색에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setSearchLoading(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [searchQuery, searchType]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
     try {
+      const body =
+        selectedLocation === null
+          ? {
+              area_id: areaId,
+              category_id: categoryId,
+              radius_m: radiusM,
+              data_mode: dataMode,
+            }
+          : {
+              location: {
+                lat: selectedLocation.latitude,
+                lng: selectedLocation.longitude,
+                label: selectedLocation.label,
+                source: selectedLocation.source,
+                address: selectedLocation.address ?? null,
+                region: selectedLocation.region ?? null,
+              },
+              category_id: categoryId,
+              radius_m: radiusM,
+              data_mode: dataMode,
+            };
+
       const response = await fetch(`${apiBaseUrl}/api/analysis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          area_id: areaId,
-          category_id: categoryId,
-          radius_m: radiusM,
-          data_mode: dataMode
-        })
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         throw new Error("analysis failed");
@@ -113,9 +193,96 @@ export function AnalysisForm() {
   }
 
   return (
-    <form aria-busy={submitting} className="formGrid" onSubmit={handleSubmit}>
+    <form aria-busy={submitting} className="formGrid analysisSearchForm" onSubmit={handleSubmit}>
+      <section className="fieldColumn analysisSearchSection">
+        <label htmlFor="location-search">위치 검색</label>
+        <input
+          aria-describedby="analysis-form-status analysis-search-hint"
+          id="location-search"
+          placeholder="행정동, 주소, 장소명을 입력해 주세요"
+          type="search"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+        <div className="searchTypeRow" role="tablist" aria-label="검색 유형">
+          {searchTypeOptions.map((option) => (
+            <button
+              key={option.id}
+              aria-selected={searchType === option.id}
+              className={searchType === option.id ? "searchTypeChip searchTypeChip--active" : "searchTypeChip"}
+              type="button"
+              onClick={() => setSearchType(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="fieldHint" id="analysis-search-hint">
+          검색 결과를 고르면 좌표와 위치 요약이 분석 요청에 함께 포함됩니다.
+        </p>
+        <div className="searchResultsPanel">
+          {searchLoading ? <p className="searchStateMessage">검색 중입니다...</p> : null}
+          {!searchLoading && searchMessage ? <p className="searchStateMessage">{searchMessage}</p> : null}
+          {!searchLoading && searchResults.length > 0 ? (
+            <div className="searchResultsList">
+              {searchResults.map((item) => (
+                <button
+                  key={`${item.source}-${item.label}-${item.latitude}-${item.longitude}`}
+                  className={
+                    selectedLocation?.label === item.label &&
+                    selectedLocation.latitude === item.latitude &&
+                    selectedLocation.longitude === item.longitude
+                      ? "searchResultItem searchResultItem--active"
+                      : "searchResultItem"
+                  }
+                  type="button"
+                  onClick={() => setSelectedLocation(item)}
+                >
+                  <strong>{item.label}</strong>
+                  <span>{item.region ?? item.address ?? "좌표 기반 결과"}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="analysisSelectionSummary">
+        <div className="sectionLabel">선택 위치</div>
+        {selectedLocation ? (
+          <>
+            <strong>{selectedLocation.label}</strong>
+            <p>{selectedLocation.region ?? selectedLocation.address ?? "좌표 기반 위치"}</p>
+            <p className="selectionMeta">
+              {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)} ·{" "}
+              {selectedLocation.source}
+            </p>
+          </>
+        ) : (
+          <>
+            <strong>기본 행정동 기반 분석</strong>
+            <p>{areas.find((item) => item.id === areaId)?.name ?? "지역을 고르는 중입니다."}</p>
+            <p className="selectionMeta">위치 검색 없이도 기존 area 기반 분석을 계속 사용할 수 있습니다.</p>
+          </>
+        )}
+      </section>
+
+      <section className="analysisMapPreview">
+        <div className="sectionLabel">지도 입력 레이어</div>
+        <strong>{selectedLocation?.label ?? "선택 위치 대기 중"}</strong>
+        <p>
+          {selectedLocation
+            ? `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`
+            : "검색 결과를 고르면 여기서 핀 위치와 좌표를 먼저 확인할 수 있습니다."}
+        </p>
+        <div className="analysisMapCanvas">
+          <div className="analysisMapPin" />
+          <small>{mapProvider} placeholder</small>
+        </div>
+      </section>
+
       <div className="fieldColumn">
-        <label htmlFor="area">지역</label>
+        <label htmlFor="area">기본 지역 fallback</label>
         <select
           aria-describedby="analysis-form-status"
           aria-invalid={Boolean(error)}
@@ -131,6 +298,7 @@ export function AnalysisForm() {
           ))}
         </select>
       </div>
+
       <div className="fieldColumn">
         <label htmlFor="category">업종</label>
         <select
@@ -148,6 +316,7 @@ export function AnalysisForm() {
           ))}
         </select>
       </div>
+
       <div className="fieldColumn">
         <label htmlFor="radius">반경</label>
         <select
@@ -165,6 +334,7 @@ export function AnalysisForm() {
           ))}
         </select>
       </div>
+
       <div className="fieldColumn">
         <label htmlFor="data-mode">데이터 모드</label>
         <select
@@ -172,21 +342,23 @@ export function AnalysisForm() {
           aria-invalid={Boolean(error)}
           id="data-mode"
           value={dataMode}
-          onChange={(event) => setDataMode(event.target.value as "mock" | "sample")}
+          onChange={(event) => setDataMode(event.target.value as "mock" | "sample" | "real")}
         >
           <option value="mock">mock sample data</option>
           <option value="sample">sample subset data</option>
+          <option value="real">imported real store data</option>
         </select>
         <p className="fieldHint" id="analysis-form-hint">
-          sample subset mode는 Phase 2 seed가 없으면 자동으로 mock mode로 fallback 됩니다.
+          sample은 fixture 중심, real은 로컬 import 데이터 기준으로 동작합니다.
         </p>
       </div>
+
       <div className="formFooter">
-        <MockDataBadge mode={dataMode} />
+        <MockDataBadge mode={dataMode === "real" ? "sample" : dataMode} />
         <button
           aria-describedby="analysis-form-status"
           className="primaryButton"
-          disabled={submitting || !areaId || !categoryId}
+          disabled={submitting || !categoryId || (!areaId && selectedLocation === null)}
           type="submit"
         >
           {submitting ? "분석 중..." : "분석 실행"}

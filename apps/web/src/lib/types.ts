@@ -45,6 +45,27 @@ export type DatasetSource = {
   data_mode: string;
 };
 
+export type SelectedLocation = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  source: string;
+  address?: string | null;
+  region?: string | null;
+};
+
+export type ResolvedRegion = {
+  area_id?: string | null;
+  area_name: string;
+  district_name: string;
+  administrative_dong_name: string;
+};
+
+export type DataCoverage = {
+  status: "ready" | "insufficient";
+  message: string;
+};
+
 export type GeoLayer = {
   layer_id: string;
   label: string;
@@ -80,8 +101,37 @@ export type AnalysisResponse = {
   recommendation_level: string;
   recommendation_reasons: string[];
   warning_reasons: string[];
+  selected_location?: SelectedLocation | null;
+  resolved_region?: ResolvedRegion | null;
+  nearby_competitors: CompetitorStore[];
+  unavailable_data_warnings: string[];
+  data_coverage: DataCoverage;
   map_layers: GeoLayer[];
   report_payload: ReportPayload;
+};
+
+export type GeoSearchItem = {
+  label: string;
+  source: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  region?: string | null;
+};
+
+export type GeoSearchResponse = {
+  query: string;
+  type: "address" | "place" | "region";
+  items: GeoSearchItem[];
+};
+
+export type GeoReverseResponse = {
+  label: string;
+  source: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  region?: string | null;
 };
 
 export type DataSourceListResponse = {

@@ -5,6 +5,10 @@ type MapEvidencePanelProps = {
 };
 
 export function MapEvidencePanel({ analysis }: MapEvidencePanelProps) {
+  const selectedLabel = analysis.selected_location?.label ?? analysis.area.name;
+  const coverageLabel =
+    analysis.data_coverage.status === "ready" ? "분석 가능" : "데이터 부족 또는 준비 중";
+
   return (
     <section className="mapEvidencePanel">
       <div className="sectionIntro">
@@ -17,8 +21,9 @@ export function MapEvidencePanel({ analysis }: MapEvidencePanelProps) {
           <div className="mapEvidencePin" />
         </div>
         <div className="mapEvidenceSummary">
-          <strong>{analysis.area.name}</strong>
+          <strong>{selectedLabel}</strong>
           <p>{analysis.radius_m}m 반경, 경쟁 업소와 행정동 경계 기준</p>
+          <p className="selectionMeta">{coverageLabel}</p>
         </div>
       </div>
 
@@ -30,6 +35,13 @@ export function MapEvidencePanel({ analysis }: MapEvidencePanelProps) {
           </div>
         ))}
       </div>
+      {analysis.unavailable_data_warnings.length > 0 ? (
+        <div className="warningList">
+          {analysis.unavailable_data_warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

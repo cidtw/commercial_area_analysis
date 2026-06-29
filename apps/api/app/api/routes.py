@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -12,7 +14,9 @@ from app.schemas.analysis import (
     MethodologyResponse,
     ReportPayloadResponse,
 )
+from app.schemas.geo import GeoReverseResponse, GeoSearchResponse
 from app.schemas.catalog import AreaListResponse, AreaSummary, CategoryListResponse, CategorySummary
+from app.services.geo_service import reverse_geocode, search_locations
 from app.services.analysis_service import (
     get_data_sources,
     get_methodology,
@@ -59,6 +63,19 @@ def get_categories(session: Session = Depends(get_db_session)) -> CategoryListRe
     return CategoryListResponse(items=items)
 
 
+@router.get("/api/geo/search", response_model=GeoSearchResponse)
+def search_geo(
+    q: str,
+    search_type: Literal["address", "place", "region"] = Query(alias="type"),
+) -> GeoSearchResponse:
+    return search_locations(query=q, search_type=search_type)
+
+
+@router.get("/api/geo/reverse", response_model=GeoReverseResponse)
+def reverse_geo(lat: float, lng: float) -> GeoReverseResponse:
+    return reverse_geocode(latitude=lat, longitude=lng)
+
+
 @router.post("/api/analysis", response_model=AnalysisResponse, status_code=status.HTTP_201_CREATED)
 def create_analysis(
     body: AnalysisRequestBody,
@@ -70,6 +87,7 @@ def create_analysis(
         category_id=body.category_id,
         radius_m=body.radius_m,
         data_mode=body.data_mode,
+        location=body.location,
     )
 
 

@@ -47,17 +47,22 @@ def build_metric_snapshot(
     stability: DistrictStabilityRecord | None = None,
     sales: DistrictSalesRecord | None = None,
     selected_radius_m: int,
+    center_latitude: float | None = None,
+    center_longitude: float | None = None,
 ) -> tuple[RawMetrics, list[CompetitorStorePayload]]:
     same_category_counts = dict.fromkeys(DISTANCE_BUCKETS, 0)
     similar_category_counts = dict.fromkeys(DISTANCE_BUCKETS, 0)
     competitor_rows: list[CompetitorStorePayload] = []
 
+    ref_lat = center_latitude if center_latitude is not None else area.center_latitude
+    ref_lng = center_longitude if center_longitude is not None else area.center_longitude
+
     for store in stores:
         if store.status != "open":
             continue
         distance_m = haversine_distance_meters(
-            area.center_latitude,
-            area.center_longitude,
+            ref_lat,
+            ref_lng,
             store.latitude,
             store.longitude,
         )
@@ -90,8 +95,8 @@ def build_metric_snapshot(
             zone
             for zone in land_use_zones
             if point_in_polygon(
-                area.center_latitude,
-                area.center_longitude,
+                ref_lat,
+                ref_lng,
                 zone.polygon_points,
             )
         ),

@@ -10,6 +10,7 @@ def test_build_store_radius_statement_uses_postgis_when_postgresql() -> None:
         code="area-1",
         name="테스트동",
         district_name="성동구",
+        administrative_dong_name="성수1가1동",
         center_latitude=37.5448,
         center_longitude=127.0557,
         is_mock=True,

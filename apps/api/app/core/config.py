@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -19,6 +19,13 @@ class Settings(BaseSettings):
         alias="ALLOWED_ORIGINS",
     )
     mock_data_label: str = Field(default="mock sample data", alias="MOCK_DATA_LABEL")
+    geo_provider: Literal["mock", "kakao"] = Field(default="mock", alias="GEO_PROVIDER")
+    kakao_local_rest_api_key: str | None = Field(default=None, alias="KAKAO_LOCAL_REST_API_KEY")
+    next_public_map_provider: str = Field(default="mock", alias="NEXT_PUBLIC_MAP_PROVIDER")
+    next_public_kakao_map_app_key: str | None = Field(
+        default=None,
+        alias="NEXT_PUBLIC_KAKAO_MAP_APP_KEY",
+    )
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

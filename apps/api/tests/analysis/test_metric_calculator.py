@@ -15,6 +15,7 @@ def test_build_metric_snapshot_counts_same_and_similar_stores() -> None:
         code="area-1",
         name="테스트동",
         district_name="성동구",
+        administrative_dong_name="성수1가1동",
         center_latitude=37.5448,
         center_longitude=127.0557,
         is_mock=True,
@@ -120,7 +121,7 @@ def test_build_metric_snapshot_counts_same_and_similar_stores() -> None:
 
 
 def test_build_metric_snapshot_excludes_stores_outside_selected_radius() -> None:
-    area = AreaRecord("area-1", "area-1", "테스트동", "성동구", 37.5448, 127.0557, True)
+    area = AreaRecord("area-1", "area-1", "테스트동", "성동구", "성수1가1동", 37.5448, 127.0557, True)
     category = CategoryRecord("cat-cafe", "cafe", "카페", "food_beverage", "dessert_drink")
     store = StoreRecord(
         "far",
@@ -159,7 +160,7 @@ def test_build_metric_snapshot_excludes_stores_outside_selected_radius() -> None
 
 
 def test_build_metric_snapshot_clamps_close_rate_for_extreme_churn() -> None:
-    area = AreaRecord("area-1", "area-1", "테스트동", "성동구", 37.5448, 127.0557, True)
+    area = AreaRecord("area-1", "area-1", "테스트동", "성동구", "성수1가1동", 37.5448, 127.0557, True)
     category = CategoryRecord("cat-cafe", "cafe", "카페", "food_beverage", "dessert_drink")
     zone = LandUseRecord(
         "준주거지역",

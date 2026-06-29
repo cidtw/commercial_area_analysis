@@ -20,6 +20,7 @@ from app.db.models import (
     OpenCloseStat,
     Store,
 )
+from app.analysis.geometry import haversine_distance_meters, point_in_polygon
 from app.domain.records import (
     AreaRecord,
     CategoryRecord,
@@ -46,6 +47,41 @@ def get_area(session: Session, area_id: str) -> Area:
     if area is None:
         raise LookupError("area not found")
     return area
+
+
+def find_area_for_point(
+    session: Session,
+    *,
+    latitude: float,
+    longitude: float,
+) -> Area | None:
+    areas = list_areas(session)
+    for area in areas:
+        coordinates = area.boundary_geojson.get("coordinates", []) if area.boundary_geojson else []
+        if (
+            isinstance(coordinates, list)
+            and coordinates
+            and isinstance(coordinates[0], list)
+            and coordinates[0]
+            and isinstance(coordinates[0][0], list)
+        ):
+            polygon = tuple(
+                (float(point[0]), float(point[1]))
+                for point in coordinates[0][0]
+                if isinstance(point, list) and len(point) == 2
+            )
+            if polygon and point_in_polygon(latitude, longitude, polygon):
+                return area
+    ranked = sorted(
+        areas,
+        key=lambda area: haversine_distance_meters(
+            latitude,
+            longitude,
+            area.center_latitude,
+            area.center_longitude,
+        ),
+    )
+    return ranked[0] if ranked else None
 
 
 def get_category(session: Session, category_id: str) -> BusinessCategory:
@@ -101,7 +137,55 @@ def get_stores_with_categories_for_analysis(
             Store.data_mode == data_mode,
         )
         return [(store, category) for store, category in session.execute(statement)]
-    return get_stores_with_categories(session, data_mode=data_mode)
+    return get_stores_with_categories_for_point(
+        session,
+        latitude=area.center_latitude,
+        longitude=area.center_longitude,
+        radius_m=radius_m,
+        data_mode=data_mode,
+    )
+
+
+def get_stores_with_categories_for_point(
+    session: Session,
+    *,
+    latitude: float,
+    longitude: float,
+    radius_m: int,
+    data_mode: str,
+) -> Sequence[tuple[Store, BusinessCategory]]:
+    if session.bind is not None and session.bind.dialect.name == "postgresql":
+        origin_point = func.ST_SetSRID(
+            func.ST_MakePoint(longitude, latitude),
+            4326,
+        ).cast(Geography(geometry_type="POINT", srid=4326))
+        statement = (
+            select(Store, BusinessCategory)
+            .join(BusinessCategory, Store.category_id == BusinessCategory.id)
+            .where(Store.status == "open")
+            .where(Store.data_mode == data_mode)
+            .where(ST_DWithin(Store.point_geom, origin_point, radius_m))
+            .order_by(Store.name)
+        )
+        return [(store, category) for store, category in session.execute(statement)]
+
+    latitude_delta = radius_m / 111_000
+    longitude_delta = radius_m / 111_000
+    statement = (
+        select(Store, BusinessCategory)
+        .join(BusinessCategory, Store.category_id == BusinessCategory.id)
+        .where(Store.status == "open")
+        .where(Store.data_mode == data_mode)
+        .where(Store.latitude.between(latitude - latitude_delta, latitude + latitude_delta))
+        .where(Store.longitude.between(longitude - longitude_delta, longitude + longitude_delta))
+        .order_by(Store.name)
+    )
+    rows = [(store, category) for store, category in session.execute(statement)]
+    return [
+        (store, category)
+        for store, category in rows
+        if haversine_distance_meters(latitude, longitude, store.latitude, store.longitude) <= radius_m
+    ]
 
 
 def get_foot_traffic(session: Session, area_id: str, radius_m: int) -> FootTrafficSnapshot | None:
@@ -186,6 +270,7 @@ def to_area_record(area: Area) -> AreaRecord:
         code=area.code,
         name=area.name,
         district_name=area.district_name,
+        administrative_dong_name=area.administrative_dong_name,
         center_latitude=area.center_latitude,
         center_longitude=area.center_longitude,
         is_mock=area.is_mock,

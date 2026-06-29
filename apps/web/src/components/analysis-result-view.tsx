@@ -54,10 +54,6 @@ function buildHeroDescription(analysis: AnalysisResponse) {
   return `${analysis.radius_m}m 반경 기준, ${demandText} ${competitionText}`;
 }
 
-function buildReasonItems(analysis: AnalysisResponse) {
-  return [...analysis.recommendation_reasons, ...analysis.warning_reasons].slice(0, 3);
-}
-
 function buildResultTitle(analysis: AnalysisResponse, title?: string) {
   if (title) {
     return title;
@@ -84,6 +80,20 @@ export function AnalysisResultView({
             <h1>{titleText}</h1>
             <p className="resultHeroLead">{heroDescription}</p>
             <p className="resultHeroSubcopy">{description}</p>
+            {analysis.selected_location ? (
+              <div className="selectedLocationCard">
+                <div className="sectionLabel">선택 위치</div>
+                <strong>{analysis.selected_location.label}</strong>
+                <p>
+                  {analysis.selected_location.region ??
+                    analysis.selected_location.address ??
+                    analysis.resolved_region?.area_name}
+                </p>
+                <p className="selectionMeta">
+                  {analysis.radius_m}m · {analysis.selected_location.source}
+                </p>
+              </div>
+            ) : null}
             <div className="heroButtonRow">
               <Link className="primaryButton" href="/analysis">
                 다른 조건으로 다시 분석
@@ -101,6 +111,7 @@ export function AnalysisResultView({
             </div>
             <strong className="resultVerdictScore">{analysis.scores.overall_fit_score}점</strong>
             <p className="resultVerdictSummary">{analysis.report_payload.summary}</p>
+            <p className="sampleInlineNotice">{analysis.data_coverage.message}</p>
             {showSampleGuide ? (
               <p className="sampleInlineNotice">샘플 데이터 기준으로 바로 확인할 수 있는 예시 화면입니다.</p>
             ) : null}
@@ -113,7 +124,7 @@ export function AnalysisResultView({
 
         <section className="mapEvidenceSection">
           <MapPlaceholder analysis={analysis} />
-          <CompetitorList stores={analysis.competitor_stores} />
+          <CompetitorList stores={analysis.nearby_competitors} />
         </section>
 
         <EvidenceAccordion analysis={analysis} />
