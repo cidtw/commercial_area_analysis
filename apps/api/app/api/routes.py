@@ -1,11 +1,25 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.repositories.catalog import list_areas, list_categories
-from app.schemas.analysis import AnalysisRequestBody, AnalysisResponse, ReportPayloadResponse
+from app.schemas.analysis import (
+    AnalysisGeoResponse,
+    AnalysisRequestBody,
+    AnalysisResponse,
+    DataSourceListResponse,
+    MethodologyResponse,
+    ReportPayloadResponse,
+)
 from app.schemas.catalog import AreaListResponse, AreaSummary, CategoryListResponse, CategorySummary
-from app.services.analysis_service import get_saved_analysis, run_analysis
+from app.services.analysis_service import (
+    get_data_sources,
+    get_methodology,
+    get_saved_analysis,
+    get_saved_analysis_geo,
+    run_analysis,
+)
 
 router = APIRouter()
 
@@ -55,6 +69,7 @@ def create_analysis(
         area_id=body.area_id,
         category_id=body.category_id,
         radius_m=body.radius_m,
+        data_mode=body.data_mode,
     )
 
 
@@ -63,9 +78,27 @@ def get_analysis(analysis_id: str, session: Session = Depends(get_db_session)) -
     return get_saved_analysis(session, analysis_id)
 
 
+@router.get("/api/analysis/{analysis_id}/geo", response_model=AnalysisGeoResponse)
+def get_analysis_geo(
+    analysis_id: str,
+    session: Session = Depends(get_db_session),
+) -> AnalysisGeoResponse:
+    return get_saved_analysis_geo(session, analysis_id)
+
+
 @router.get("/api/analysis/{analysis_id}/report", response_model=ReportPayloadResponse)
 def get_analysis_report(
     analysis_id: str,
     session: Session = Depends(get_db_session),
 ) -> ReportPayloadResponse:
     return get_saved_analysis(session, analysis_id).report_payload
+
+
+@router.get("/api/data-sources", response_model=DataSourceListResponse)
+def data_sources() -> DataSourceListResponse:
+    return get_data_sources(get_settings().mock_data_label)
+
+
+@router.get("/api/methodology", response_model=MethodologyResponse)
+def methodology() -> MethodologyResponse:
+    return get_methodology()

@@ -62,9 +62,14 @@ export function AnalysisForm() {
   const [areaId, setAreaId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [radiusM, setRadiusM] = useState<(typeof radiusOptions)[number]>(500);
+  const [dataMode, setDataMode] = useState<"mock" | "sample">("mock");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const statusMessage = error || (submitting ? "분석 요청을 보내는 중입니다." : "모든 항목을 고른 뒤 분석을 실행하세요.");
+  const statusMessage =
+    error ||
+    (submitting
+      ? "분석 요청을 보내는 중입니다."
+      : "모든 항목을 고른 뒤 분석을 실행하세요.");
 
   useEffect(() => {
     async function loadCatalog() {
@@ -88,7 +93,12 @@ export function AnalysisForm() {
       const response = await fetch(`${apiBaseUrl}/api/analysis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ area_id: areaId, category_id: categoryId, radius_m: radiusM })
+        body: JSON.stringify({
+          area_id: areaId,
+          category_id: categoryId,
+          radius_m: radiusM,
+          data_mode: dataMode
+        })
       });
       if (!response.ok) {
         throw new Error("analysis failed");
@@ -155,8 +165,24 @@ export function AnalysisForm() {
           ))}
         </select>
       </div>
+      <div className="fieldColumn">
+        <label htmlFor="data-mode">데이터 모드</label>
+        <select
+          aria-describedby="analysis-form-status analysis-form-hint"
+          aria-invalid={Boolean(error)}
+          id="data-mode"
+          value={dataMode}
+          onChange={(event) => setDataMode(event.target.value as "mock" | "sample")}
+        >
+          <option value="mock">mock sample data</option>
+          <option value="sample">sample subset data</option>
+        </select>
+        <p className="fieldHint" id="analysis-form-hint">
+          sample subset mode는 Phase 2 seed가 없으면 자동으로 mock mode로 fallback 됩니다.
+        </p>
+      </div>
       <div className="formFooter">
-        <MockDataBadge />
+        <MockDataBadge mode={dataMode} />
         <button
           aria-describedby="analysis-form-status"
           className="primaryButton"

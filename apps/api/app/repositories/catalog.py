@@ -12,6 +12,9 @@ from sqlalchemy.sql.functions import func
 from app.db.models import (
     Area,
     BusinessCategory,
+    DistrictCompetitionStat,
+    DistrictSalesStat,
+    DistrictStabilityStat,
     FootTrafficSnapshot,
     LandUseZone,
     OpenCloseStat,
@@ -20,6 +23,9 @@ from app.db.models import (
 from app.domain.records import (
     AreaRecord,
     CategoryRecord,
+    DistrictCompetitionRecord,
+    DistrictSalesRecord,
+    DistrictStabilityRecord,
     FootTrafficRecord,
     LandUseRecord,
     OpenCloseRecord,
@@ -49,13 +55,19 @@ def get_category(session: Session, category_id: str) -> BusinessCategory:
     return category
 
 
-def get_stores_with_categories(session: Session) -> Sequence[tuple[Store, BusinessCategory]]:
+def get_stores_with_categories(
+    session: Session,
+    *,
+    data_mode: str | None = None,
+) -> Sequence[tuple[Store, BusinessCategory]]:
     statement = (
         select(Store, BusinessCategory)
         .join(BusinessCategory, Store.category_id == BusinessCategory.id)
         .where(Store.status == "open")
         .order_by(Store.name)
     )
+    if data_mode is not None:
+        statement = statement.where(Store.data_mode == data_mode)
     return [(store, category) for store, category in session.execute(statement)]
 
 
@@ -82,11 +94,14 @@ def get_stores_with_categories_for_analysis(
     *,
     area: AreaRecord,
     radius_m: int,
+    data_mode: str,
 ) -> Sequence[tuple[Store, BusinessCategory]]:
     if session.bind is not None and session.bind.dialect.name == "postgresql":
-        statement = build_store_radius_statement(area=area, radius_m=radius_m)
+        statement = build_store_radius_statement(area=area, radius_m=radius_m).where(
+            Store.data_mode == data_mode,
+        )
         return [(store, category) for store, category in session.execute(statement)]
-    return get_stores_with_categories(session)
+    return get_stores_with_categories(session, data_mode=data_mode)
 
 
 def get_foot_traffic(session: Session, area_id: str, radius_m: int) -> FootTrafficSnapshot | None:
@@ -111,6 +126,54 @@ def get_open_close_stat(session: Session, area_id: str, category_id: str) -> Ope
         .where(
             OpenCloseStat.area_id == area_id,
             OpenCloseStat.category_id == category_id,
+        )
+        .limit(1)
+    )
+    return session.scalar(statement)
+
+
+def get_district_competition_stat(
+    session: Session,
+    area_id: str,
+    category_id: str,
+) -> DistrictCompetitionStat | None:
+    statement = (
+        select(DistrictCompetitionStat)
+        .where(
+            DistrictCompetitionStat.area_id == area_id,
+            DistrictCompetitionStat.category_id == category_id,
+        )
+        .limit(1)
+    )
+    return session.scalar(statement)
+
+
+def get_district_stability_stat(
+    session: Session,
+    area_id: str,
+    category_id: str,
+) -> DistrictStabilityStat | None:
+    statement = (
+        select(DistrictStabilityStat)
+        .where(
+            DistrictStabilityStat.area_id == area_id,
+            DistrictStabilityStat.category_id == category_id,
+        )
+        .limit(1)
+    )
+    return session.scalar(statement)
+
+
+def get_district_sales_stat(
+    session: Session,
+    area_id: str,
+    category_id: str,
+) -> DistrictSalesStat | None:
+    statement = (
+        select(DistrictSalesStat)
+        .where(
+            DistrictSalesStat.area_id == area_id,
+            DistrictSalesStat.category_id == category_id,
         )
         .limit(1)
     )
@@ -215,4 +278,54 @@ def to_open_close_record(stat: OpenCloseStat | None) -> OpenCloseRecord | None:
         opened_count_12m=stat.opened_count_12m,
         closed_count_12m=stat.closed_count_12m,
         survival_rate_12m=stat.survival_rate_12m,
+    )
+
+
+def to_district_competition_record(
+    stat: DistrictCompetitionStat | None,
+) -> DistrictCompetitionRecord | None:
+    if stat is None:
+        return None
+    return DistrictCompetitionRecord(
+        area_id=stat.area_id,
+        category_id=stat.category_id,
+        same_category_count=stat.same_category_count,
+        similar_category_count=stat.similar_category_count,
+        franchise_store_count=stat.franchise_store_count,
+        opened_rate_12m=stat.opened_rate_12m,
+        closed_rate_12m=stat.closed_rate_12m,
+    )
+
+
+def to_district_stability_record(
+    stat: DistrictStabilityStat | None,
+) -> DistrictStabilityRecord | None:
+    if stat is None:
+        return None
+    return DistrictStabilityRecord(
+        area_id=stat.area_id,
+        category_id=stat.category_id,
+        avg_operation_months=stat.avg_operation_months,
+        avg_closed_operation_months=stat.avg_closed_operation_months,
+        change_index_code=stat.change_index_code,
+        change_index_label=stat.change_index_label,
+        stability_score_raw=stat.stability_score_raw,
+    )
+
+
+def to_district_sales_record(
+    stat: DistrictSalesStat | None,
+) -> DistrictSalesRecord | None:
+    if stat is None:
+        return None
+    return DistrictSalesRecord(
+        area_id=stat.area_id,
+        category_id=stat.category_id,
+        estimated_sales_amount=stat.estimated_sales_amount,
+        estimated_sales_count=stat.estimated_sales_count,
+        weekday_sales_ratio=stat.weekday_sales_ratio,
+        weekend_sales_ratio=stat.weekend_sales_ratio,
+        daytime_sales_ratio=stat.daytime_sales_ratio,
+        night_sales_ratio=stat.night_sales_ratio,
+        target_customer_hint=stat.target_customer_hint,
     )

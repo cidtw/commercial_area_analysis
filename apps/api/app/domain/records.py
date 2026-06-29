@@ -70,3 +70,37 @@ class OpenCloseRecord:
     closed_count_12m: int
     survival_rate_12m: float
 
+
+@dataclass(frozen=True, slots=True)
+class DistrictCompetitionRecord:
+    area_id: str
+    category_id: str
+    same_category_count: int
+    similar_category_count: int
+    franchise_store_count: int
+    opened_rate_12m: float
+    closed_rate_12m: float
+
+
+@dataclass(frozen=True, slots=True)
+class DistrictStabilityRecord:
+    area_id: str
+    category_id: str
+    avg_operation_months: float
+    avg_closed_operation_months: float
+    change_index_code: str
+    change_index_label: str
+    stability_score_raw: float
+
+
+@dataclass(frozen=True, slots=True)
+class DistrictSalesRecord:
+    area_id: str
+    category_id: str
+    estimated_sales_amount: float
+    estimated_sales_count: int
+    weekday_sales_ratio: float
+    weekend_sales_ratio: float
+    daytime_sales_ratio: float
+    night_sales_ratio: float
+    target_customer_hint: str

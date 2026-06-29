@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "boundary_id": "boundary-seongsu-1",
+        "area_code": "seongsu-1",
+        "boundary_name": "성수1가1동 sample boundary"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[127.0528, 37.5429], [127.0589, 37.5429], [127.0589, 37.5472], [127.0528, 37.5472], [127.0528, 37.5429]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "boundary_id": "boundary-seongsu-2",
+        "area_code": "seongsu-2",
+        "boundary_name": "성수1가2동 sample boundary"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[127.0589, 37.5446], [127.0656, 37.5446], [127.0656, 37.5495], [127.0589, 37.5495], [127.0589, 37.5446]]]
+      }
+    }
+  ]
+}

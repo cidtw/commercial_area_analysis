@@ -1,0 +1,4 @@
+external_store_id,area_code,category_code,category_name,store_name,address,latitude,longitude
+soba-001,seongsu-1,cafe,카페,성수 샘플 커피,서울 성동구 연무장길 21,37.5452,127.0564
+soba-002,seongsu-1,bakery,베이커리,성수 샘플 베이크,서울 성동구 연무장길 18,37.5454,127.0559
+soba-003,seongsu-2,cafe,카페,성수 샘플 로스터리,서울 성동구 성수이로 13,37.5474,127.0611

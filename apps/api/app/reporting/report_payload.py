@@ -7,6 +7,8 @@ def build_factor_lists(
     raw_metrics: RawMetrics,
     scores: dict[str, int],
 ) -> tuple[list[str], list[str]]:
+    stability_score = scores.get("stability_score", 50)
+    accessibility_score = scores.get("accessibility_score", 50)
     positives: list[str] = []
     risks: list[str] = []
 
@@ -16,12 +18,18 @@ def build_factor_lists(
         positives.append("용도지역 조건이 선택 업종과 비교적 잘 맞습니다.")
     if scores["churn_risk_score"] >= 65:
         positives.append("최근 개폐업 사이클이 상대적으로 안정적인 편입니다.")
+    if stability_score >= 65:
+        positives.append("평균 영업 개월수와 상권 변화 지표가 안정적으로 유지됩니다.")
+    if accessibility_score >= 65:
+        positives.append("시간대별 수요 흐름과 거래량이 비교적 고르게 확보됩니다.")
     if scores["competition_score"] <= 45:
         risks.append("동종 또는 유사 업종 밀도가 높아 경쟁 강도가 큽니다.")
     if scores["land_use_score"] <= 40:
         risks.append("용도지역 적합성이 낮아 업종 운영 조건을 별도로 확인해야 합니다.")
     if scores["churn_risk_score"] <= 45:
         risks.append("폐업률 또는 생존율 지표가 보수적으로 해석될 필요가 있습니다.")
+    if stability_score <= 45:
+        risks.append("상권 변화 지표가 약해 장기 운영 안정성을 추가로 점검해야 합니다.")
     if float(raw_metrics["foot_traffic_night_average_index"]) < 75:
         risks.append("야간 유동이 낮아 시간대별 수요 편차를 고려해야 합니다.")
 

@@ -2,7 +2,7 @@
 
 ## 1. Atmosphere & Identity
 
-도시 탐색을 위한 조용한 분석 데스크. 화려한 부동산 광고가 아니라, 데이터를 차분하게 읽고 판단 근거를 남기는 도구처럼 느껴져야 한다. 시그니처는 "layered field notes"로, 패널과 카드가 지도 위 조사 노트처럼 정리되되 과장된 색상과 과잉 모션 없이 명확한 정보 대비를 유지한다.
+도시 탐색을 위한 조용한 소비자용 리포트. 화려한 부동산 광고나 SaaS 대시보드가 아니라, 사용자가 결과를 먼저 이해하고 필요할 때만 근거를 펼쳐보는 보고서처럼 느껴져야 한다. 시그니처는 "calm decision report"로, 여백과 타이포그래피로 정보 위계를 만들고 카드 사용은 절제한다.
 
 ## 2. Color
 
@@ -10,19 +10,19 @@
 
 | Role | Token | Light | Dark | Usage |
 |------|-------|-------|------|-------|
-| Surface/primary | --surface-primary | #f5f2ea | #111418 | App background |
-| Surface/secondary | --surface-secondary | #ece6d7 | #182028 | Secondary panels |
-| Surface/elevated | --surface-elevated | #fffdf7 | #22303b | Cards, modal blocks |
-| Text/primary | --text-primary | #16212b | #eef3f6 | Headline, body |
-| Text/secondary | --text-secondary | #556472 | #adc0cc | Supporting text |
-| Text/tertiary | --text-tertiary | #7c8b97 | #81939f | Captions |
-| Border/default | --border-default | #d6cdbb | #2f3f4c | Default borders |
-| Border/subtle | --border-subtle | #e5ddce | #24313b | Light dividers |
-| Accent/primary | --accent-primary | #0d5a75 | #64b3cf | CTAs, focus |
-| Accent/hover | --accent-hover | #0b4a60 | #89d0e8 | Hover state |
-| Status/success | --status-success | #2f7d54 | #59c083 | Positive indicators |
-| Status/warning | --status-warning | #b76a17 | #e7a14d | Cautions |
-| Status/error | --status-error | #b44538 | #ec7c71 | Risks, errors |
+| Surface/primary | --surface-primary | #f4f6fa | #111418 | App background |
+| Surface/secondary | --surface-secondary | #edf2f8 | #182028 | Secondary panels |
+| Surface/elevated | --surface-elevated | #ffffff | #22303b | Cards, modal blocks |
+| Text/primary | --text-primary | #191f28 | #eef3f6 | Headline, body |
+| Text/secondary | --text-secondary | #4e5968 | #adc0cc | Supporting text |
+| Text/tertiary | --text-tertiary | #8b95a1 | #81939f | Captions |
+| Border/default | --border-default | #dbe2ea | #2f3f4c | Default borders |
+| Border/subtle | --border-subtle | #edf1f5 | #24313b | Light dividers |
+| Accent/primary | --accent-primary | #3182f6 | #64b3cf | CTAs, focus |
+| Accent/hover | --accent-hover | #1f6fe5 | #89d0e8 | Hover state |
+| Status/success | --status-success | #2f9e5b | #59c083 | Positive indicators |
+| Status/warning | --status-warning | #e28b2d | #e7a14d | Cautions |
+| Status/error | --status-error | #d35f3f | #ec7c71 | Risks, errors |
 | Status/info | --status-info | #315c8b | #77a9e0 | Informational indicators |
 
 ### Rules
@@ -49,7 +49,7 @@
 
 ### Font Stack
 
-- Primary: `"IBM Plex Sans KR", "Pretendard Variable", "Apple SD Gothic Neo", sans-serif`
+- Primary: `"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
 - Mono: `"IBM Plex Mono", "JetBrains Mono", monospace`
 
 ### Rules
@@ -109,6 +109,27 @@
 - **Accessibility**: label + describedby
 - **Motion**: none beyond focus/submit state
 
+### Result Hero
+
+- **Structure**: title / 한 줄 요약 / 보조 설명 / CTA / verdict summary
+- **Variants**: desktop split, mobile single flow
+- **Spacing**: `--space-5`, `--space-6`, `--space-8`
+- **Accessibility**: h1 + button labels + clear reading order
+
+### Score Insight Card
+
+- **Structure**: 지표명 / 점수 / 짧은 해석 / meter / raw metric 한 줄
+- **Variants**: blue, amber, green
+- **Spacing**: `--space-4`, `--space-5`
+- **Accessibility**: 지표명과 해석을 함께 읽을 수 있어야 함
+
+### Evidence Accordion
+
+- **Structure**: section intro / details-summary blocks
+- **Variants**: competition, demand, operations, source limits
+- **Spacing**: `--space-4`, `--space-5`
+- **Accessibility**: native details/summary 사용
+
 ## 6. Motion & Interaction
 
 ### Timing
@@ -132,4 +153,3 @@
 tonal-shift
 
 서페이스는 밝기 차와 얇은 선으로만 분리한다. 무거운 그림자는 쓰지 않고, 필요할 때만 한 단계 진한 패널을 배치한다.
-

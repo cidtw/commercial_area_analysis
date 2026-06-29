@@ -12,11 +12,11 @@ export default function AnalysisPage() {
     <main className="pageShell">
       <section className="panel">
         <div className="panelHeader">
-          <p className="eyebrow">Analysis Form</p>
+          <p className="eyebrow">분석 조건</p>
           <h1>분석 조건 선택</h1>
           <p>
-            현재는 성동구 성수권 샘플 지역만 제공합니다. 결과는 참고용이며, 실제 입지 판단 전에
-            현장 확인이 필요합니다.
+            현재는 성동구 성수권 샘플 지역만 제공합니다. mock 기본 모드와 sample subset 모드를
+            구분해 분석할 수 있으며, 결과는 참고용입니다.
           </p>
         </div>
         <AnalysisForm />

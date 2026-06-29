@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { AnalysisResultView } from "@/components/analysis-result-view";
 import { getAnalysis } from "@/lib/analysis";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params
 }: {
@@ -35,8 +37,8 @@ export default async function AnalysisResultPage({
   return (
     <AnalysisResultView
       analysis={analysis}
-      description={`${analysis.radius_m}m 반경으로 계산된 mock sample data 기반 결과입니다.`}
-      eyebrow="Analysis Result"
+      description={`${analysis.radius_m}m 반경 기준의 분석 결과입니다. 실제 현장 조사와 함께 해석하는 것이 좋습니다.`}
+      eyebrow="분석 결과"
     />
   );
 }

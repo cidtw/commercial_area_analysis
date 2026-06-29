@@ -3,11 +3,12 @@ import Link from "next/link";
 import type { AnalysisResponse } from "@/lib/types";
 
 import { CompetitorList } from "./competitor-list";
+import { DataSourcesPanel } from "./data-sources-panel";
+import { EvidenceAccordion } from "./evidence-accordion";
 import { MapPlaceholder } from "./map-placeholder";
 import { MetricGrid } from "./metric-grid";
-import { MockDataBadge } from "./mock-data-badge";
 import { ReportPanel } from "./report-panel";
-import { ScoreCard } from "./score-card";
+import { VerdictBadge } from "./verdict-badge";
 
 type AnalysisResultViewProps = {
   analysis: AnalysisResponse;
@@ -17,6 +18,53 @@ type AnalysisResultViewProps = {
   showSampleGuide?: boolean;
 };
 
+function numberValue(value: string | number | undefined) {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string") {
+    return Number(value);
+  }
+  return 0;
+}
+
+function buildHeroDescription(analysis: AnalysisResponse) {
+  const demandScore = analysis.scores.demand_score;
+  const competitionCount = numberValue(analysis.raw_metrics.same_category_count_500m);
+  const closeRate = numberValue(analysis.raw_metrics.close_rate_12m) * 100;
+
+  const demandText =
+    demandScore >= 70
+      ? "수요는 비교적 충분하지만"
+      : demandScore >= 45
+        ? "수요는 어느 정도 있지만"
+        : "수요는 아직 보수적으로 봐야 하고";
+
+  const competitionText =
+    competitionCount >= 4
+      ? "주변 경쟁이 높은 편이에요."
+      : competitionCount >= 2
+        ? "경쟁 상황을 함께 점검해야 해요."
+        : "주변 경쟁은 아주 높지는 않아요.";
+
+  if (closeRate >= 25) {
+    return `${analysis.radius_m}m 반경 기준, ${demandText} 최근 폐업 흐름과 경쟁 상황을 함께 봐야 해요.`;
+  }
+
+  return `${analysis.radius_m}m 반경 기준, ${demandText} ${competitionText}`;
+}
+
+function buildReasonItems(analysis: AnalysisResponse) {
+  return [...analysis.recommendation_reasons, ...analysis.warning_reasons].slice(0, 3);
+}
+
+function buildResultTitle(analysis: AnalysisResponse, title?: string) {
+  if (title) {
+    return title;
+  }
+  return `${analysis.area.name} ${analysis.category.name} 입지 분석 결과`;
+}
+
 export function AnalysisResultView({
   analysis,
   eyebrow,
@@ -24,53 +72,54 @@ export function AnalysisResultView({
   description,
   showSampleGuide = false
 }: AnalysisResultViewProps) {
+  const heroDescription = buildHeroDescription(analysis);
+  const titleText = buildResultTitle(analysis, title);
+
   return (
-    <main className="pageShell">
-      <section className="panel resultHero">
-        <div className="panelHeader">
-          <p className="eyebrow">{eyebrow}</p>
-          <h1>
-            {title ?? (
-              <>
-                {analysis.area.name} · {analysis.category.name}
-              </>
-            )}
-          </h1>
-          <p>{description}</p>
-        </div>
-        <MockDataBadge />
-        {showSampleGuide ? (
-          <div className="sampleGuide">
-            <div>
-              <strong>기본 샘플 조건</strong>
-              <p>
-                성수1가1동 · 카페 · 500m 반경 조합으로 즉시 렌더링한 예시입니다.
-              </p>
-            </div>
-            <div className="sampleGuideActions">
+    <main className="consumerReportPage">
+      <section className="consumerReportShell">
+        <div className="resultHeroSection">
+          <div className="resultHeroText">
+            <p className="sectionEyebrow">{eyebrow}</p>
+            <h1>{titleText}</h1>
+            <p className="resultHeroLead">{heroDescription}</p>
+            <p className="resultHeroSubcopy">{description}</p>
+            <div className="heroButtonRow">
               <Link className="primaryButton" href="/analysis">
-                다른 조건으로 분석
+                다른 조건으로 다시 분석
               </Link>
-              <Link className="secondaryButton" href="/methodology">
-                산식과 데이터 보기
+              <Link className="secondaryButton" href="#details">
+                근거 자세히 보기
               </Link>
             </div>
           </div>
-        ) : null}
-        <div className="scoreRow">
-          <ScoreCard label="종합 적합도" score={analysis.scores.overall_fit_score} tone="positive" />
-          <ScoreCard label="경쟁 강도" score={analysis.scores.competition_score} />
-          <ScoreCard label="수요 점수" score={analysis.scores.demand_score} />
-          <ScoreCard label="용도 적합성" score={analysis.scores.land_use_score} />
-          <ScoreCard label="개폐업 리스크" score={analysis.scores.churn_risk_score} tone="warning" />
+
+          <aside className="resultVerdictPanel">
+            <div className="resultVerdictHeader">
+              <span>이번 분석 결과</span>
+              <VerdictBadge level={analysis.recommendation_level} />
+            </div>
+            <strong className="resultVerdictScore">{analysis.scores.overall_fit_score}점</strong>
+            <p className="resultVerdictSummary">{analysis.report_payload.summary}</p>
+            {showSampleGuide ? (
+              <p className="sampleInlineNotice">샘플 데이터 기준으로 바로 확인할 수 있는 예시 화면입니다.</p>
+            ) : null}
+          </aside>
         </div>
-      </section>
-      <MetricGrid metrics={analysis.raw_metrics} />
-      <div className="resultGrid">
-        <MapPlaceholder analysis={analysis} />
+
         <ReportPanel analysis={analysis} />
-      </div>
-      <CompetitorList stores={analysis.competitor_stores} />
+
+        <MetricGrid analysis={analysis} />
+
+        <section className="mapEvidenceSection">
+          <MapPlaceholder analysis={analysis} />
+          <CompetitorList stores={analysis.competitor_stores} />
+        </section>
+
+        <EvidenceAccordion analysis={analysis} />
+
+        <DataSourcesPanel analysis={analysis} />
+      </section>
     </main>
   );
 }

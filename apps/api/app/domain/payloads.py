@@ -12,6 +12,8 @@ class CompetitorStorePayload(TypedDict):
     address: str
     status: str
     is_mock: bool
+    latitude: float
+    longitude: float
 
 
 class LlmReadyPayload(TypedDict):

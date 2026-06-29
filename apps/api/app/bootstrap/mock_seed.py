@@ -15,6 +15,9 @@ from app.db.models import (
     Store,
 )
 
+MOCK_REFERENCE_DATE = date(2026, 6, 1)
+MOCK_DATASET_ID = "mock-seongsu-core"
+
 
 def require_str(value: object) -> str:
     if isinstance(value, str):
@@ -77,6 +80,9 @@ def seed_database(session: Session) -> None:
                 center_point=f"POINT({row['center_longitude']} {row['center_latitude']})",
                 boundary_geojson=row["boundary_geojson"],
                 boundary_geom=str(row["boundary_geojson"]),
+                data_mode="mock",
+                reference_date=MOCK_REFERENCE_DATE,
+                dataset_id=MOCK_DATASET_ID,
                 is_mock=bool(row["is_mock"]),
                 source_name=require_str(row["source_name"]),
                 source_version=require_str(row["source_version"]),
@@ -98,6 +104,9 @@ def seed_database(session: Session) -> None:
                 status=require_str(row["status"]),
                 opened_on=optional_date_from_row(row, "opened_on"),
                 closed_on=optional_date_from_row(row, "closed_on"),
+                data_mode="mock",
+                reference_date=MOCK_REFERENCE_DATE,
+                dataset_id=MOCK_DATASET_ID,
                 is_mock=bool(row["is_mock"]),
                 source_name=require_str(row["source_name"]),
                 source_version=require_str(row["source_version"]),
@@ -115,6 +124,9 @@ def seed_database(session: Session) -> None:
                 weekend_average_index=require_float(row["weekend_average_index"]),
                 daytime_average_index=require_float(row["daytime_average_index"]),
                 night_average_index=require_float(row["night_average_index"]),
+                data_mode="mock",
+                reference_date=MOCK_REFERENCE_DATE,
+                dataset_id=MOCK_DATASET_ID,
                 is_mock=bool(row["is_mock"]),
             ),
         )
@@ -129,6 +141,9 @@ def seed_database(session: Session) -> None:
                 restriction_notes=require_str(row["restriction_notes"]),
                 boundary_geojson=row["boundary_geojson"],
                 zone_geom=str(row["boundary_geojson"]),
+                data_mode="mock",
+                reference_date=MOCK_REFERENCE_DATE,
+                dataset_id=MOCK_DATASET_ID,
                 is_mock=bool(row["is_mock"]),
             ),
         )
@@ -144,6 +159,9 @@ def seed_database(session: Session) -> None:
                 opened_count_12m=require_int(row["opened_count_12m"]),
                 closed_count_12m=require_int(row["closed_count_12m"]),
                 survival_rate_12m=require_float(row["survival_rate_12m"]),
+                data_mode="mock",
+                reference_date=MOCK_REFERENCE_DATE,
+                dataset_id=MOCK_DATASET_ID,
                 is_mock=bool(row["is_mock"]),
             ),
         )

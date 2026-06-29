@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.adapters.sources.registry import build_phase2_sources
+from app.analysis.geometry import build_circle_polygon
+from app.analysis.methodology import (
+    METHODLOGY_DATA_MODES,
+    METHODOLOGY_DISCLAIMER,
+    METHODOLOGY_VERSION,
+    SCORE_FORMULAE,
+)
 from app.analysis.metrics import build_metric_snapshot
+from app.analysis.recommendations import build_recommendation
 from app.analysis.scoring import build_scores
 from app.core.config import get_settings
 from app.domain.payloads import CompetitorStorePayload, RawMetrics, ReportPayloadData
@@ -12,10 +22,16 @@ from app.reporting.report_payload import build_report_payload
 from app.repositories import analysis as analysis_repository
 from app.repositories import catalog as catalog_repository
 from app.schemas.analysis import (
+    AnalysisGeoResponse,
     AnalysisResponse,
     CompetitorStoreItem,
+    DatasetSourceItem,
+    DataSourceListResponse,
+    GeoLayerResponse,
+    MethodologyResponse,
     ReportPayloadResponse,
     ScoreBreakdown,
+    ScoreFormulaItem,
 )
 from app.schemas.catalog import AreaSummary, CategorySummary
 
@@ -50,19 +66,68 @@ def normalize_int(value: object) -> int:
 def normalize_competitor_stores(
     payload: Sequence[Mapping[str, object]],
 ) -> list[CompetitorStorePayload]:
-    return [
-        CompetitorStorePayload(
-            id=str(item["id"]),
-            name=str(item["name"]),
-            category_name=str(item["category_name"]),
-            distance_m=(
-                float(item["distance_m"])
-                if isinstance(item["distance_m"], (float, int, str))
-                else 0.0
+    items: list[CompetitorStorePayload] = []
+    for item in payload:
+        items.append(
+            CompetitorStorePayload(
+                id=str(item["id"]),
+                name=str(item["name"]),
+                category_name=str(item["category_name"]),
+                distance_m=(
+                    float(item["distance_m"])
+                    if isinstance(item["distance_m"], (float, int, str))
+                    else 0.0
+                ),
+                address=str(item["address"]),
+                status=str(item["status"]),
+                is_mock=bool(item["is_mock"]),
+                latitude=(
+                    float(item["latitude"])
+                    if isinstance(item["latitude"], (float, int, str))
+                    else 0.0
+                ),
+                longitude=(
+                    float(item["longitude"])
+                    if isinstance(item["longitude"], (float, int, str))
+                    else 0.0
+                ),
             ),
-            address=str(item["address"]),
-            status=str(item["status"]),
-            is_mock=bool(item["is_mock"]),
+        )
+    return items
+
+
+def normalize_data_source_items(
+    payload: Sequence[Mapping[str, object]],
+) -> list[DatasetSourceItem]:
+    items: list[DatasetSourceItem] = []
+    for item in payload:
+        reference_value = item.get("reference_date", date(2026, 6, 1))
+        if isinstance(reference_value, str):
+            reference_date = date.fromisoformat(reference_value)
+        elif isinstance(reference_value, date):
+            reference_date = reference_value
+        else:
+            reference_date = date(2026, 6, 1)
+        items.append(
+            DatasetSourceItem(
+                source_key=str(item["source_key"]),
+                source_name=str(item["source_name"]),
+                source_version=str(item["source_version"]),
+                reference_date=reference_date,
+                license_note=str(item["license_note"]),
+                data_mode=str(item["data_mode"]),
+            ),
+        )
+    return items
+
+
+def normalize_geo_layers(payload: Sequence[Mapping[str, object]]) -> list[GeoLayerResponse]:
+    return [
+        GeoLayerResponse(
+            layer_id=str(item["layer_id"]),
+            label=str(item["label"]),
+            data_mode=str(item["data_mode"]),
+            feature_collection=normalize_mapping(item["feature_collection"]),
         )
         for item in payload
     ]
@@ -79,7 +144,7 @@ def normalize_report_payload(payload: Mapping[str, object]) -> ReportPayloadData
         positive_factors=positive_factors,
         risk_factors=risk_factors,
         metric_evidence=normalize_raw_metrics(
-            normalize_mapping(payload.get("metric_evidence", {}))
+            normalize_mapping(payload.get("metric_evidence", {})),
         ),
         disclaimers=disclaimers,
         llm_ready_payload={
@@ -92,17 +157,135 @@ def normalize_report_payload(payload: Mapping[str, object]) -> ReportPayloadData
                 if isinstance(key, str)
             },
             "raw_metrics": normalize_raw_metrics(
-                normalize_mapping(llm_ready_payload.get("raw_metrics", {}))
+                normalize_mapping(llm_ready_payload.get("raw_metrics", {})),
             ),
             "positive_factors": normalize_string_list(
-                llm_ready_payload.get("positive_factors", [])
+                llm_ready_payload.get("positive_factors", []),
             ),
-            "risk_factors": normalize_string_list(
-                llm_ready_payload.get("risk_factors", [])
+            "risk_factors": normalize_string_list(llm_ready_payload.get("risk_factors", [])),
+            "instructions": normalize_string_list(
+                llm_ready_payload.get("instructions", []),
             ),
-            "instructions": normalize_string_list(llm_ready_payload.get("instructions", [])),
         },
     )
+
+
+def build_mock_data_source(data_label: str) -> dict[str, object]:
+    return {
+        "source_key": "mock_seed_source",
+        "source_name": data_label,
+        "source_version": "2026.06",
+        "reference_date": "2026-06-01",
+        "license_note": "local mock sample data for development and tests",
+        "data_mode": "mock",
+    }
+
+
+def build_analysis_data_sources(
+    data_label: str,
+    *,
+    data_mode: str,
+    included_source_keys: Sequence[str],
+) -> list[dict[str, object]]:
+    if data_mode == "mock":
+        return [build_mock_data_source(data_label)]
+
+    items = [build_mock_data_source(data_label)]
+    source_registry = build_phase2_sources()
+    for key in included_source_keys:
+        descriptor = source_registry[key].describe()
+        items.append(
+            {
+                "source_key": descriptor.source_key,
+                "source_name": descriptor.source_name,
+                "source_version": descriptor.source_version,
+                "reference_date": descriptor.reference_date.isoformat(),
+                "license_note": descriptor.license_note,
+                "data_mode": descriptor.data_mode,
+            },
+        )
+    return items
+
+
+def build_analysis_map_layers(
+    *,
+    area_model,
+    competitor_rows: list[CompetitorStorePayload],
+    radius_m: int,
+    data_mode: str,
+) -> list[dict[str, object]]:
+    boundary_geometry = area_model.boundary_geojson or {
+        "type": "Polygon",
+        "coordinates": [
+            build_circle_polygon(area_model.center_latitude, area_model.center_longitude, 40),
+        ],
+    }
+    boundary_features = [
+        {
+            "type": "Feature",
+            "properties": {
+                "area_id": area_model.id,
+                "area_name": area_model.name,
+            },
+            "geometry": boundary_geometry,
+        },
+    ]
+    radius_features = [
+        {
+            "type": "Feature",
+            "properties": {
+                "radius_m": radius_m,
+                "area_id": area_model.id,
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    build_circle_polygon(
+                        area_model.center_latitude,
+                        area_model.center_longitude,
+                        radius_m,
+                    ),
+                ],
+            },
+        },
+    ]
+    competitor_features = [
+        {
+            "type": "Feature",
+            "properties": {
+                "store_id": row["id"],
+                "name": row["name"],
+                "category_name": row["category_name"],
+                "distance_m": row["distance_m"],
+                "status": row["status"],
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [row["longitude"], row["latitude"]],
+            },
+        }
+        for row in competitor_rows
+    ]
+    return [
+        {
+            "layer_id": "selected-area-boundary",
+            "label": "선택 행정동 경계",
+            "data_mode": area_model.data_mode,
+            "feature_collection": {"type": "FeatureCollection", "features": boundary_features},
+        },
+        {
+            "layer_id": "analysis-radius",
+            "label": "분석 반경",
+            "data_mode": data_mode,
+            "feature_collection": {"type": "FeatureCollection", "features": radius_features},
+        },
+        {
+            "layer_id": "competitor-stores",
+            "label": "경쟁 업소",
+            "data_mode": data_mode,
+            "feature_collection": {"type": "FeatureCollection", "features": competitor_features},
+        },
+    ]
 
 
 def run_analysis(
@@ -111,18 +294,21 @@ def run_analysis(
     area_id: str,
     category_id: str,
     radius_m: int,
+    data_mode: str,
 ) -> AnalysisResponse:
     settings = get_settings()
     area_model = catalog_repository.get_area(session, area_id)
     category_model = catalog_repository.get_category(session, category_id)
     area = catalog_repository.to_area_record(area_model)
     category = catalog_repository.to_category_record(category_model)
+    requested_data_mode = data_mode
     stores = catalog_repository.to_store_records(
         catalog_repository.get_stores_with_categories_for_analysis(
             session,
             area=area,
             radius_m=1000,
-        )
+            data_mode=requested_data_mode,
+        ),
     )
     foot_traffic = catalog_repository.to_foot_traffic_record(
         catalog_repository.get_foot_traffic(session, area.id, radius_m),
@@ -133,6 +319,41 @@ def run_analysis(
     open_close = catalog_repository.to_open_close_record(
         catalog_repository.get_open_close_stat(session, area.id, category.id),
     )
+    competition = catalog_repository.to_district_competition_record(
+        catalog_repository.get_district_competition_stat(session, area.id, category.id)
+        if requested_data_mode == "sample"
+        else None,
+    )
+    stability = catalog_repository.to_district_stability_record(
+        catalog_repository.get_district_stability_stat(session, area.id, category.id)
+        if requested_data_mode == "sample"
+        else None,
+    )
+    sales = catalog_repository.to_district_sales_record(
+        catalog_repository.get_district_sales_stat(session, area.id, category.id)
+        if requested_data_mode == "sample"
+        else None,
+    )
+    has_sample_data = requested_data_mode == "sample" and (
+        bool(stores)
+        or competition is not None
+        or stability is not None
+        or sales is not None
+        or area_model.data_mode == "sample"
+    )
+    effective_data_mode = "sample" if has_sample_data else "mock"
+    if requested_data_mode == "sample" and effective_data_mode == "mock":
+        stores = catalog_repository.to_store_records(
+            catalog_repository.get_stores_with_categories_for_analysis(
+                session,
+                area=area,
+                radius_m=1000,
+                data_mode="mock",
+            ),
+        )
+        competition = None
+        stability = None
+        sales = None
 
     raw_metrics, competitor_rows = build_metric_snapshot(
         area=area,
@@ -141,26 +362,63 @@ def run_analysis(
         traffic=foot_traffic,
         land_use_zones=land_use_zones,
         open_close=open_close,
+        competition=competition,
+        stability=stability,
+        sales=sales,
         selected_radius_m=radius_m,
     )
     scores = build_scores(raw_metrics)
+    recommendation_level, recommendation_reasons, warning_reasons = build_recommendation(
+        scores=scores,
+        raw_metrics=raw_metrics,
+    )
+    included_source_keys: list[str] = []
+    if stores and effective_data_mode == "sample":
+        included_source_keys.append("soba_store_source")
+    if competition is not None:
+        included_source_keys.append("seoul_competition_source")
+    if stability is not None:
+        included_source_keys.append("seoul_stability_source")
+    if sales is not None:
+        included_source_keys.append("seoul_sales_source")
+    if area_model.data_mode == "sample":
+        included_source_keys.append("boundary_source")
+    data_sources = build_analysis_data_sources(
+        settings.mock_data_label,
+        data_mode=effective_data_mode,
+        included_source_keys=included_source_keys,
+    )
+    map_layers = build_analysis_map_layers(
+        area_model=area_model,
+        competitor_rows=competitor_rows,
+        radius_m=radius_m,
+        data_mode=effective_data_mode,
+    )
     report_payload = build_report_payload(
         area_name=area.name,
         category_name=category.name,
         radius_m=radius_m,
         raw_metrics=raw_metrics,
         scores=scores,
-        data_label=settings.mock_data_label,
+        data_label=(
+            "sample subset + mock base data"
+            if effective_data_mode == "sample"
+            else settings.mock_data_label
+        ),
     )
     request = analysis_repository.create_analysis_request(
         session,
         area_id=area.id,
         category_id=category.id,
         radius_m=radius_m,
+        data_mode=effective_data_mode,
+        selected_boundary_id=f"boundary-{area.code}",
         input_snapshot={
             "area_id": area.id,
             "category_id": category.id,
             "radius_m": radius_m,
+            "data_mode": requested_data_mode,
+            "effective_data_mode": effective_data_mode,
         },
     )
     result = analysis_repository.create_analysis_result(
@@ -172,19 +430,33 @@ def run_analysis(
         risk_factors=list(report_payload["risk_factors"]),
         competitor_stores=competitor_rows,
         report_payload=report_payload,
+        data_mode=effective_data_mode,
+        data_sources=data_sources,
+        recommendation_level=recommendation_level,
+        recommendation_reasons=recommendation_reasons,
+        warning_reasons=warning_reasons,
+        map_layers=map_layers,
+        methodology_version=METHODOLOGY_VERSION,
     )
     session.commit()
     return build_analysis_response(
-        area_model,
-        category_model,
-        request.radius_m,
-        result.id,
-        normalize_raw_metrics(result.raw_metrics),
-        scores,
-        result.positive_factors,
-        result.risk_factors,
-        normalize_competitor_stores(result.competitor_stores),
-        normalize_report_payload(result.report_payload),
+        area_model=area_model,
+        category_model=category_model,
+        radius_m=request.radius_m,
+        analysis_id=result.id,
+        data_mode=result.data_mode,
+        methodology_version=result.methodology_version,
+        raw_metrics=normalize_raw_metrics(result.raw_metrics),
+        scores=scores,
+        positive_factors=result.positive_factors,
+        risk_factors=result.risk_factors,
+        competitor_stores=normalize_competitor_stores(result.competitor_stores),
+        data_sources=normalize_data_source_items(result.data_sources),
+        recommendation_level=result.recommendation_level,
+        recommendation_reasons=normalize_string_list(result.recommendation_reasons),
+        warning_reasons=normalize_string_list(result.warning_reasons),
+        map_layers=normalize_geo_layers(result.map_layers),
+        report_payload=normalize_report_payload(result.report_payload),
     )
 
 
@@ -198,31 +470,48 @@ def get_saved_analysis(session: Session, analysis_id: str) -> AnalysisResponse:
         "demand_score": result.demand_score,
         "land_use_score": result.land_use_score,
         "churn_risk_score": result.churn_risk_score,
+        "stability_score": result.stability_score,
+        "accessibility_score": result.accessibility_score,
     }
     return build_analysis_response(
-        area_model,
-        category_model,
-        request.radius_m,
-        result.id,
-        normalize_raw_metrics(result.raw_metrics),
-        scores,
-        result.positive_factors,
-        result.risk_factors,
-        normalize_competitor_stores(result.competitor_stores),
-        normalize_report_payload(result.report_payload),
+        area_model=area_model,
+        category_model=category_model,
+        radius_m=request.radius_m,
+        analysis_id=result.id,
+        data_mode=result.data_mode,
+        methodology_version=result.methodology_version,
+        raw_metrics=normalize_raw_metrics(result.raw_metrics),
+        scores=scores,
+        positive_factors=result.positive_factors,
+        risk_factors=result.risk_factors,
+        competitor_stores=normalize_competitor_stores(result.competitor_stores),
+        data_sources=normalize_data_source_items(result.data_sources),
+        recommendation_level=result.recommendation_level,
+        recommendation_reasons=normalize_string_list(result.recommendation_reasons),
+        warning_reasons=normalize_string_list(result.warning_reasons),
+        map_layers=normalize_geo_layers(result.map_layers),
+        report_payload=normalize_report_payload(result.report_payload),
     )
 
 
 def build_analysis_response(
+    *,
     area_model,
     category_model,
     radius_m: int,
     analysis_id: str,
+    data_mode: str,
+    methodology_version: str,
     raw_metrics: RawMetrics,
     scores: dict[str, int],
     positive_factors: list[str],
     risk_factors: list[str],
     competitor_stores: list[CompetitorStorePayload],
+    data_sources: list[DatasetSourceItem],
+    recommendation_level: str,
+    recommendation_reasons: list[str],
+    warning_reasons: list[str],
+    map_layers: list[GeoLayerResponse],
     report_payload: ReportPayloadData,
 ) -> AnalysisResponse:
     return AnalysisResponse(
@@ -242,10 +531,59 @@ def build_analysis_response(
             similarity_group=category_model.similarity_group,
         ),
         radius_m=radius_m,
+        data_mode=data_mode,
+        methodology_version=methodology_version,
         scores=ScoreBreakdown(**scores),
         raw_metrics=raw_metrics,
         positive_factors=positive_factors,
         risk_factors=risk_factors,
         competitor_stores=[CompetitorStoreItem(**item) for item in competitor_stores],
+        data_sources=data_sources,
+        recommendation_level=recommendation_level,
+        recommendation_reasons=recommendation_reasons,
+        warning_reasons=warning_reasons,
+        map_layers=map_layers,
         report_payload=ReportPayloadResponse(**report_payload),
+    )
+
+
+def get_saved_analysis_geo(session: Session, analysis_id: str) -> AnalysisGeoResponse:
+    response = get_saved_analysis(session, analysis_id)
+    return AnalysisGeoResponse(
+        analysis_id=response.analysis_id,
+        data_mode=response.data_mode,
+        layers=response.map_layers,
+    )
+
+
+def get_data_sources(settings_label: str) -> DataSourceListResponse:
+    mock_item = build_mock_data_source(settings_label)
+    sample_items = build_analysis_data_sources(
+        settings_label,
+        data_mode="sample",
+        included_source_keys=[
+            "soba_store_source",
+            "seoul_competition_source",
+            "seoul_stability_source",
+            "seoul_sales_source",
+            "boundary_source",
+        ],
+    )[1:]
+    return DataSourceListResponse(items=normalize_data_source_items([mock_item, *sample_items]))
+
+
+def get_methodology() -> MethodologyResponse:
+    return MethodologyResponse(
+        version=METHODOLOGY_VERSION,
+        data_modes=list(METHODLOGY_DATA_MODES),
+        score_formulae=[
+            ScoreFormulaItem(
+                score_key=str(item["score_key"]),
+                title=str(item["title"]),
+                formula=str(item["formula"]),
+                inputs=normalize_string_list(item["inputs"]),
+            )
+            for item in SCORE_FORMULAE
+        ],
+        disclaimer=METHODOLOGY_DISCLAIMER,
     )

@@ -37,6 +37,9 @@ class Area(Base):
         POLYGON_FALLBACK.with_variant(Geometry("MULTIPOLYGON", srid=4326), "postgresql"),
         nullable=True,
     )
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    reference_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     is_mock: Mapped[bool] = mapped_column(Boolean, default=True)
     source_name: Mapped[str] = mapped_column(String(128))
     source_version: Mapped[str] = mapped_column(String(64))
@@ -72,6 +75,10 @@ class Store(Base):
     status: Mapped[str] = mapped_column(String(32))
     opened_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     closed_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    reference_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    external_store_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     is_mock: Mapped[bool] = mapped_column(Boolean, default=True)
     source_name: Mapped[str] = mapped_column(String(128))
     source_version: Mapped[str] = mapped_column(String(64))
@@ -91,6 +98,9 @@ class FootTrafficSnapshot(Base):
     weekend_average_index: Mapped[float] = mapped_column(Float)
     daytime_average_index: Mapped[float] = mapped_column(Float)
     night_average_index: Mapped[float] = mapped_column(Float)
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    reference_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     is_mock: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -108,6 +118,9 @@ class LandUseZone(Base):
         POLYGON_FALLBACK.with_variant(Geometry("MULTIPOLYGON", srid=4326), "postgresql"),
         nullable=True,
     )
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    reference_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     is_mock: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -123,7 +136,74 @@ class OpenCloseStat(Base):
     opened_count_12m: Mapped[int] = mapped_column(Integer)
     closed_count_12m: Mapped[int] = mapped_column(Integer)
     survival_rate_12m: Mapped[float] = mapped_column(Float)
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    reference_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     is_mock: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class DistrictCompetitionStat(Base):
+    __tablename__ = "district_competition_stats"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=build_uuid)
+    area_id: Mapped[str] = mapped_column(ForeignKey("areas.id"), index=True)
+    category_id: Mapped[str] = mapped_column(ForeignKey("business_categories.id"), index=True)
+    snapshot_month: Mapped[date] = mapped_column(Date)
+    same_category_count: Mapped[int] = mapped_column(Integer)
+    similar_category_count: Mapped[int] = mapped_column(Integer)
+    franchise_store_count: Mapped[int] = mapped_column(Integer)
+    opened_rate_12m: Mapped[float] = mapped_column(Float)
+    closed_rate_12m: Mapped[float] = mapped_column(Float)
+    data_mode: Mapped[str] = mapped_column(String(16), default="sample")
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+
+class DistrictStabilityStat(Base):
+    __tablename__ = "district_stability_stats"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=build_uuid)
+    area_id: Mapped[str] = mapped_column(ForeignKey("areas.id"), index=True)
+    category_id: Mapped[str] = mapped_column(ForeignKey("business_categories.id"), index=True)
+    snapshot_month: Mapped[date] = mapped_column(Date)
+    avg_operation_months: Mapped[float] = mapped_column(Float)
+    avg_closed_operation_months: Mapped[float] = mapped_column(Float)
+    change_index_code: Mapped[str] = mapped_column(String(32))
+    change_index_label: Mapped[str] = mapped_column(String(64))
+    stability_score_raw: Mapped[float] = mapped_column(Float)
+    data_mode: Mapped[str] = mapped_column(String(16), default="sample")
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+
+class DistrictSalesStat(Base):
+    __tablename__ = "district_sales_stats"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=build_uuid)
+    area_id: Mapped[str] = mapped_column(ForeignKey("areas.id"), index=True)
+    category_id: Mapped[str] = mapped_column(ForeignKey("business_categories.id"), index=True)
+    snapshot_month: Mapped[date] = mapped_column(Date)
+    estimated_sales_amount: Mapped[float] = mapped_column(Float)
+    estimated_sales_count: Mapped[int] = mapped_column(Integer)
+    weekday_sales_ratio: Mapped[float] = mapped_column(Float)
+    weekend_sales_ratio: Mapped[float] = mapped_column(Float)
+    daytime_sales_ratio: Mapped[float] = mapped_column(Float)
+    night_sales_ratio: Mapped[float] = mapped_column(Float)
+    target_customer_hint: Mapped[str] = mapped_column(String(255))
+    data_mode: Mapped[str] = mapped_column(String(16), default="sample")
+    dataset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+
+class AnalysisWeightProfile(Base):
+    __tablename__ = "analysis_weight_profiles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=build_uuid)
+    category_id: Mapped[str | None] = mapped_column(
+        ForeignKey("business_categories.id"),
+        index=True,
+        nullable=True,
+    )
+    profile_name: Mapped[str] = mapped_column(String(64))
+    weights: Mapped[dict[str, object]] = mapped_column(JSON)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class AnalysisRequest(Base):
@@ -133,6 +213,8 @@ class AnalysisRequest(Base):
     area_id: Mapped[str] = mapped_column(ForeignKey("areas.id"))
     category_id: Mapped[str] = mapped_column(ForeignKey("business_categories.id"))
     radius_m: Mapped[int] = mapped_column(Integer)
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    selected_boundary_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     requested_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     input_snapshot: Mapped[dict[str, object]] = mapped_column(JSON)
 
@@ -151,6 +233,15 @@ class AnalysisResult(Base):
     demand_score: Mapped[int] = mapped_column(Integer)
     land_use_score: Mapped[int] = mapped_column(Integer)
     churn_risk_score: Mapped[int] = mapped_column(Integer)
+    stability_score: Mapped[int] = mapped_column(Integer, default=0)
+    accessibility_score: Mapped[int] = mapped_column(Integer, default=0)
+    data_mode: Mapped[str] = mapped_column(String(16), default="mock")
+    data_sources: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    recommendation_level: Mapped[str] = mapped_column(String(32), default="unrated")
+    recommendation_reasons: Mapped[list[str]] = mapped_column(JSON, default=list)
+    warning_reasons: Mapped[list[str]] = mapped_column(JSON, default=list)
+    map_layers: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    methodology_version: Mapped[str] = mapped_column(String(64), default="phase1-v1")
     raw_metrics: Mapped[dict[str, object]] = mapped_column(JSON)
     positive_factors: Mapped[list[str]] = mapped_column(JSON)
     risk_factors: Mapped[list[str]] = mapped_column(JSON)

@@ -1,0 +1,3 @@
+area_code,category_code,snapshot_month,avg_operation_months,avg_closed_operation_months,change_index_code,change_index_label,stability_score_raw
+seongsu-1,cafe,2026-06-01,28.4,11.2,stable,정체,68
+seongsu-2,cafe,2026-06-01,34.1,14.9,expand,확장,79
