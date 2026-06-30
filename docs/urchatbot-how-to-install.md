@@ -2,6 +2,8 @@
 
 This guide explains how to make `urchatbot` installable by other Slack workspaces and how end users can complete the installation.
 
+[![Install (for users)](https://img.shields.io/badge/Install%20%28for%20users%29-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://slack.com/oauth/v2/authorize?client_id=11358846796466.11397955311362&scope=chat:write,commands,app_mentions:read)
+
 ## App Identity
 
 - App name: `urchatbot`
