@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DAY 02 DELIVERY Poster</title>
+    <style>
+      :root {
+        --surface-primary: #f4f6fa;
+        --surface-secondary: #edf2f8;
+        --surface-elevated: #ffffff;
+        --text-primary: #191f28;
+        --text-secondary: #4e5968;
+        --text-tertiary: #8b95a1;
+        --border-default: #dbe2ea;
+        --accent-primary: #3182f6;
+        --accent-soft: rgba(49, 130, 246, 0.1);
+        --status-success: #2f9e5b;
+        --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(49, 130, 246, 0.16), transparent 24%),
+          radial-gradient(circle at right 18%, rgba(47, 158, 91, 0.1), transparent 18%),
+          linear-gradient(180deg, #fbfdff 0%, var(--surface-primary) 42%, #ebf2f8 100%);
+        color: var(--text-primary);
+        font-family: "Pretendard Variable", Pretendard, "Segoe UI", system-ui, sans-serif;
+      }
+
+      .poster {
+        width: 1600px;
+        min-height: 947px;
+        margin: 0 auto;
+        padding: 52px;
+      }
+
+      .frame {
+        position: relative;
+        overflow: hidden;
+        padding: 40px;
+        border: 1px solid var(--border-default);
+        border-radius: 36px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .frame::before {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(135deg, rgba(49, 130, 246, 0.06), transparent 38%),
+          radial-gradient(circle at 88% 0%, rgba(49, 130, 246, 0.16), transparent 24%);
+        content: "";
+        pointer-events: none;
+      }
+
+      .grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-primary);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 18px 0 0;
+        font-size: 58px;
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        max-width: 780px;
+        margin: 22px 0 0;
+        color: var(--text-secondary);
+        font-size: 18px;
+        line-height: 1.65;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border: 1px solid var(--border-default);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.84);
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 28px;
+      }
+
+      .metric-card,
+      .flow-card,
+      .note-card {
+        border: 1px solid var(--border-default);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .metric-card {
+        padding: 20px 22px;
+      }
+
+      .metric-card span,
+      .flow-step span {
+        display: block;
+        color: var(--text-tertiary);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .metric-card strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 22px;
+        line-height: 1.28;
+        letter-spacing: -0.03em;
+      }
+
+      .metric-card p {
+        margin: 10px 0 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .right-stack {
+        display: grid;
+        gap: 20px;
+      }
+
+      .flow-card {
+        display: grid;
+        gap: 16px;
+        padding: 24px;
+      }
+
+      .flow-step {
+        display: grid;
+        gap: 6px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border-default);
+      }
+
+      .flow-step:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .flow-step strong {
+        font-size: 20px;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+      }
+
+      .flow-step p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .note-card {
+        padding: 24px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(243, 248, 252, 0.94) 100%);
+      }
+
+      .note-card h2 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+      }
+
+      .note-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .note-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: var(--status-success);
+        box-shadow: 0 0 0 8px rgba(47, 158, 91, 0.1);
+        flex: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="poster">
+      <section class="frame">
+        <div class="grid">
+          <div>
+            <span class="eyebrow">DAY 02 DELIVERY</span>
+            <h1>2일차는<br />결과 화면을<br />읽는 보고서로<br />고정하는 날입니다.</h1>
+            <p class="lead">1일차에 정한 범위를 기준으로, 2일차에는 결과 화면 흐름과 표현 규칙, 검증 증거를 실제 산출물로 연결했습니다. 핵심은 기능 추가보다 결과를 읽는 순서를 코드와 문서로 고정하는 데 있습니다.</p>
+            <div class="chips">
+              <span class="chip">sample 결과 화면</span>
+              <span class="chip">verdict → reasons → score</span>
+              <span class="chip">browser evidence</span>
+            </div>
+            <div class="metric-grid">
+              <article class="metric-card">
+                <span>결과 화면 재구성</span>
+                <strong>/sample · /analysis/[id]</strong>
+                <p>카드 병렬 구성을 단일 리포트 흐름으로 다시 정리했습니다.</p>
+              </article>
+              <article class="metric-card">
+                <span>표현 로직 통합</span>
+                <strong>result-presentation.ts</strong>
+                <p>label, score, evidence 문장을 한 곳에 모았습니다.</p>
+              </article>
+              <article class="metric-card">
+                <span>디자인 계약</span>
+                <strong>resultReport · verdictHero</strong>
+                <p>scoreMeter · evidenceDisclosure · sourceNotice</p>
+              </article>
+              <article class="metric-card">
+                <span>검증 자산</span>
+                <strong>.omo evidence</strong>
+                <p>build 로그, 본문 텍스트, 스크린샷, quality gate를 남겼습니다.</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="right-stack">
+            <article class="flow-card">
+              <div class="flow-step">
+                <span>01</span>
+                <strong>결과 화면 재구성</strong>
+                <p>sample과 analysis 결과 화면을 병렬 카드형에서 단일 소비자 리포트 흐름으로 다시 정리했습니다.</p>
+              </div>
+              <div class="flow-step">
+                <span>02</span>
+                <strong>표현 규칙 고정</strong>
+                <p>verdict, reasons, score, disclosure, source notice를 읽는 순서 기준으로 다시 묶었습니다.</p>
+              </div>
+              <div class="flow-step">
+                <span>03</span>
+                <strong>검증 증거 확보</strong>
+                <p>mock API 기반 렌더링, HTTP 200, 본문 텍스트, 스크린샷을 evidence로 남겼습니다.</p>
+              </div>
+              <div class="flow-step">
+                <span>04</span>
+                <strong>후속 변경 정리</strong>
+                <p>upstream refactor와 겹치지 않도록 로컬 후속 패치 범위를 분리해서 정리했습니다.</p>
+              </div>
+            </article>
+
+            <article class="note-card">
+              <h2>이번 단계의 핵심</h2>
+              <div class="note-list">
+                <div class="note-item">
+                  <span class="dot"></span>
+                  <span>읽는 순서가 먼저 보이는 결과 리포트 구조로 바꿨습니다.</span>
+                </div>
+                <div class="note-item">
+                  <span class="dot"></span>
+                  <span>helper와 primitive를 코드와 문서에 함께 고정했습니다.</span>
+                </div>
+                <div class="note-item">
+                  <span class="dot"></span>
+                  <span>검증 경로와 evidence 위치를 다음 작업 기준으로 남겼습니다.</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

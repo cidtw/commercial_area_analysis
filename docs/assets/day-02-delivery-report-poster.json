@@ -1,0 +1,65 @@
+{
+  "eyebrow": "DAY 02 DELIVERY",
+  "title_lines": [
+    "2일차는",
+    "결과 화면을",
+    "읽는 보고서로",
+    "고정하는 날입니다."
+  ],
+  "lead": "1일차에 정한 범위를 기준으로, 2일차에는 결과 화면 흐름과 표현 규칙, 검증 증거를 실제 산출물로 연결했습니다. 핵심은 기능 추가보다 결과를 읽는 순서를 코드와 문서로 고정하는 데 있습니다.",
+  "chips": [
+    "sample 결과 화면",
+    "verdict → reasons → score",
+    "browser evidence"
+  ],
+  "metrics": [
+    {
+      "label": "결과 화면 재구성",
+      "title": "/sample · /analysis/[id]",
+      "body": "카드 병렬 구성을 단일 리포트 흐름으로 다시 정리했습니다."
+    },
+    {
+      "label": "표현 로직 통합",
+      "title": "result-presentation.ts",
+      "body": "label, score, evidence 문장을 한 곳에 모았습니다."
+    },
+    {
+      "label": "디자인 계약",
+      "title": "resultReport · verdictHero",
+      "body": "scoreMeter · evidenceDisclosure · sourceNotice"
+    },
+    {
+      "label": "검증 자산",
+      "title": ".omo evidence",
+      "body": "build 로그, 본문 텍스트, 스크린샷, quality gate를 남겼습니다."
+    }
+  ],
+  "steps": [
+    {
+      "number": "01",
+      "title": "결과 화면 재구성",
+      "body": "sample과 analysis 결과 화면을 병렬 카드형에서 단일 소비자 리포트 흐름으로 다시 정리했습니다."
+    },
+    {
+      "number": "02",
+      "title": "표현 규칙 고정",
+      "body": "verdict, reasons, score, disclosure, source notice를 읽는 순서 기준으로 다시 묶었습니다."
+    },
+    {
+      "number": "03",
+      "title": "검증 증거 확보",
+      "body": "mock API 기반 렌더링, HTTP 200, 본문 텍스트, 스크린샷을 evidence로 남겼습니다."
+    },
+    {
+      "number": "04",
+      "title": "후속 변경 정리",
+      "body": "upstream refactor와 겹치지 않도록 로컬 후속 패치 범위를 분리해서 정리했습니다."
+    }
+  ],
+  "note_title": "이번 단계의 핵심",
+  "notes": [
+    "읽는 순서가 먼저 보이는 결과 리포트 구조로 바꿨습니다.",
+    "helper와 primitive를 코드와 문서에 함께 고정했습니다.",
+    "검증 경로와 evidence 위치를 다음 작업 기준으로 남겼습니다."
+  ]
+}
