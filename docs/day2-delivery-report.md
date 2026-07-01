@@ -4,10 +4,11 @@
 
 2026-07-01 기준 day2 루프는 ULW 세션 `day2-es-toolkit-ui-20260701`에서 `complete`로 마감됐다.
 
-이번 보고서는 두 묶음을 함께 정리한다.
+이번 보고서는 세 묶음을 함께 정리한다.
 
 1. day2 루프에서 완료한 결과 리포트 재설계
-2. 그 직후 코드 리뷰를 반영하며 정리한 API 안정화/버그 픽스
+2. repo-local es-toolkit guidance skill 추가
+3. 코드 리뷰 이후 upstream refactor와 비교하며 확인한 후속 점검 결과
 
 ## Day 2 Loop Deliverables
 
@@ -28,24 +29,18 @@
 - mock API를 분리해 `/sample` 결과 표면을 실제 렌더링까지 검증했다.
 - HTTP 200, 텍스트 캡처, 전체 페이지 스크린샷을 `.omo/evidence/day2-es-toolkit-ui-*`로 남겼다.
 
-## Post-review API Fixes
+## Post-review Follow-up
 
-### 1. Kakao geo fallback behavior fixed
+### 1. Local hardening patch was reviewed against upstream refactor
 
-- `KakaoLocalAdapter`가 REST key가 없을 때도 proxy fallback 경로를 사용할 수 있게 정리했다.
-- direct Kakao 호출 실패 시 warning만 남기고 proxy 또는 internal catalog fallback으로 이어지게 만들었다.
-- provider payload parsing을 좁혀 type-safe 하게 바꿨다.
+- 로컬에서는 Kakao fallback, runtime dependency, ingest/catalog robustness를 보강하는 패치를 만들고 검증했다.
+- rebase 과정에서 확인한 결과, 원격 `main`에는 이미 더 큰 `Phase 3 MVP changes & refactor` 커밋이 먼저 들어와 있었다.
+- 겹치는 API 구조 변경은 원격 refactor에 흡수돼 있었기 때문에, 이번 최종 푸시는 중복 패치를 억지로 얹지 않고 보고서/자산만 남기는 쪽으로 정리했다.
 
-### 2. Runtime dependency mismatch fixed
+### 2. Review verification still produced useful evidence
 
-- app runtime 코드가 `httpx`를 사용하고 있었지만 runtime dependency에는 없던 상태를 수정했다.
-- `apps/api/pyproject.toml`와 `apps/api/uv.lock`에서 `httpx`를 runtime dependency로 옮겼다.
-
-### 3. Geo/catalog/ingest robustness tightened
-
-- boundary 좌표 추출이 `Polygon`과 `MultiPolygon`을 모두 다루도록 보강됐다.
-- coordinate resolution은 bounding-box candidate filtering 후 point-in-polygon, 마지막에 nearest fallback 순으로 정리됐다.
-- store ingest는 `BATCH_SIZE` 기준 중간 commit이 가능하도록 바뀌었다.
+- targeted API 검증 자체는 유효했고, 회귀 여부를 확인하는 자료로 남겼다.
+- 즉, “새 패치를 추가로 푸시했다”기보다 “upstream refactor 기준으로 중복 패치를 밀어넣지 않았다”가 오늘 후속 작업의 정확한 결과다.
 
 ## Verification
 
@@ -90,7 +85,6 @@
 
 이번 푸시에는 아래 범위가 포함된다.
 
-- day2 result report redesign 관련 web/frontend 변경
 - repo-local es-toolkit guidance skill
 - day2 보고서 및 요약 이미지
-- 리뷰 후 정리된 API fallback / ingest / boundary / dependency 픽스
+- upstream에 이미 반영된 day2 루프 결과를 설명하는 문서화 보강

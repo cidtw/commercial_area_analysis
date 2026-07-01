@@ -2,8 +2,8 @@
   <rect width="1600" height="900" fill="#F4F7FB"/>
   <rect x="48" y="48" width="1504" height="804" rx="36" fill="#FFFFFF"/>
   <text x="96" y="132" fill="#2D6CDF" font-family="Pretendard, Arial, sans-serif" font-size="28" font-weight="700">DAY 2 · DELIVERY REPORT</text>
-  <text x="96" y="190" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="56" font-weight="800">루프 완료 + 리뷰 픽스 반영</text>
-  <text x="96" y="236" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="24">결과 리포트 재설계 완료 상태에 오늘 API 안정화 픽스를 합쳐, 현재 푸시되는 작업 범위를 한 장으로 요약했습니다.</text>
+  <text x="96" y="190" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="56" font-weight="800">루프 완료 + 후속 점검 정리</text>
+  <text x="96" y="236" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="24">day2 루프 완료 상태와 오늘 후속 검증 결과를 합쳐, 지금 실제로 푸시되는 범위를 한 장으로 정리했습니다.</text>
 
   <rect x="96" y="292" width="432" height="228" rx="28" fill="#F8FBFF" stroke="#DCE6F2"/>
   <text x="128" y="350" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="32" font-weight="700">Loop Delivery</text>
@@ -12,10 +12,10 @@
   <text x="128" y="464" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• es-toolkit 기반 repo-local skill + DESIGN primitive 추가</text>
 
   <rect x="560" y="292" width="464" height="228" rx="28" fill="#F8FBFF" stroke="#DCE6F2"/>
-  <text x="592" y="350" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="32" font-weight="700">Review Fixes</text>
-  <text x="592" y="396" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• Kakao direct 실패 시 proxy/internal fallback 유지</text>
-  <text x="592" y="430" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• httpx runtime dependency 누락 수정</text>
-  <text x="592" y="464" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• boundary parsing · nearest fallback · batch commit 보강</text>
+  <text x="592" y="350" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="32" font-weight="700">Review Follow-up</text>
+  <text x="592" y="396" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• local hardening patch는 검증 완료</text>
+  <text x="592" y="430" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• remote main refactor가 겹치는 구조를 선반영</text>
+  <text x="592" y="464" fill="#4E5968" font-family="Pretendard, Arial, sans-serif" font-size="22">• 최종 push는 중복 패치 대신 report/asset 정리로 마감</text>
 
   <rect x="1056" y="292" width="400" height="228" rx="28" fill="#F8FBFF" stroke="#DCE6F2"/>
   <text x="1088" y="350" fill="#191F28" font-family="Pretendard, Arial, sans-serif" font-size="32" font-weight="700">Verification</text>
@@ -26,6 +26,6 @@
   <rect x="96" y="560" width="1360" height="220" rx="28" fill="#0F172A"/>
   <text x="128" y="628" fill="#FFFFFF" font-family="Pretendard, Arial, sans-serif" font-size="30" font-weight="700">Artifacts & Push Scope</text>
   <text x="128" y="676" fill="#D7E0EA" font-family="Pretendard, Arial, sans-serif" font-size="22">• docs/day2-delivery-report.md  • docs/assets/day2-delivery-report-summary.svg</text>
-  <text x="128" y="712" fill="#D7E0EA" font-family="Pretendard, Arial, sans-serif" font-size="22">• .omo/evidence/day2-es-toolkit-ui-*  • API fallback/ingest/catalog review fixes</text>
-  <text x="128" y="748" fill="#8FB3FF" font-family="Pretendard, Arial, sans-serif" font-size="22" font-weight="600">Ready to push local day2 commits + today review fixes to origin/main</text>
+  <text x="128" y="712" fill="#D7E0EA" font-family="Pretendard, Arial, sans-serif" font-size="22">• .omo/evidence/day2-es-toolkit-ui-*  • repo-local es-toolkit skill</text>
+  <text x="128" y="748" fill="#8FB3FF" font-family="Pretendard, Arial, sans-serif" font-size="22" font-weight="600">Ready to push rebased day2 documentation commits to origin/main</text>
 </svg>
